@@ -1,52 +1,65 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export const Home = () => {
+import "../styles/home.css";
 
-	const { store, dispatch } = useGlobalReducer()
+import SettingsDropdown from "../components/Profile/SettingsDropdown";
+import WeeklyKms from "../components/Home/WeeklyKms";
+import StartRouteButton from "../components/Home/StartRouteButton";
+import FeaturedRoutes from "../components/Home/FeaturedRoutes";
+import FriendsActivity from "../components/Home/FriendsActivity";
+import MaintenanceCard from "../components/Maintenance/MaintenanceCard";
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
 
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
 
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
+const Home = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-			return data
 
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
+    setLoading(false);
+  }, [navigate]);
 
-	}
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
-	useEffect(() => {
-		loadMessage()
-	}, [])
+  if (loading) {
+    return (
+      <div className="loading">
+        <h2>Bienvenido a ATrail...</h2>
+        <p>Cargando perfil...</p>
+      </div>
+    );
+  }
 
-	return (
-		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
-			</div>
-		</div>
-	);
-}; 
+  return (
+    <div className="home">
+      <header className="home-header">
+        <h1>Inicio</h1>
+        <div className="settings-wrapper">
+          <SettingsDropdown onLogout={handleLogout} />
+        </div>
+      </header>
+
+      <main className="home-content">
+        <WeeklyKms />
+        <StartRouteButton />
+        <FeaturedRoutes />
+        <FriendsActivity />
+        <MaintenanceCard title="Mantenimiento" showTitle={true} showActionButton={false} />
+        <StartRouteButton />
+      </main>
+    </div>
+  );
+};
+
+export default Home;

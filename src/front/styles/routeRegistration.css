@@ -1,0 +1,184 @@
+.rr-page {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.rr-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Overlay superior */
+.rr-overlay-top {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none; /* permite interactuar el mapa salvo en hijos */
+  z-index: 10;
+}
+
+.rr-header {
+  width: min(520px, calc(100% - 24px));
+  pointer-events: auto;
+}
+
+.rr-search {
+  display: grid;
+  grid-template-columns: 40px 1fr 44px;
+  align-items: center;
+  background: rgba(255,255,255,0.92);
+  border-radius: 18px;
+  padding: 10px 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.rr-search input {
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+}
+
+.rr-search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  font-size: 16px;
+}
+
+.rr-search-btn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+.rr-chips {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.rr-chip {
+  border: 0;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-size: 12px;
+}
+
+.rr-chip.active {
+  background: #f3c247; /* tono similar al amarillo del mock */
+}
+
+/* Cards */
+.rr-overlay-cards {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 92px;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.rr-card {
+  pointer-events: auto;
+  width: min(520px, calc(100% - 24px));
+  background: rgba(255,255,255,0.95);
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+.rr-card-title {
+  font-weight: 900;
+}
+
+.rr-card-sub {
+  margin-top: 4px;
+  opacity: 0.7;
+  font-size: 13px;
+}
+
+.rr-card-metrics {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.rr-m-label {
+  font-size: 11px;
+  opacity: 0.6;
+  font-weight: 700;
+}
+
+.rr-m-val {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.rr-rating {
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+/* Bottom nav */
+.rr-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 14px 12px 18px;
+  z-index: 12;
+}
+
+.rr-bottom-nav {
+  margin: 0 auto;
+  width: min(620px, calc(100% - 24px));
+  background: rgba(255,255,255,0.92);
+  border-radius: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px 1fr 1fr;
+  align-items: center;
+  padding: 10px 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+.rr-nav-item {
+  border: 0;
+  background: transparent;
+  font-weight: 800;
+  font-size: 12px;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.rr-fab {
+  border: 0;
+  cursor: pointer;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: #f3c247;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+  font-size: 22px;
+  font-weight: 900;
+}
