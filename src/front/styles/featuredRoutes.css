@@ -1,0 +1,119 @@
+/*      SECCIÓN RUTAS            */
+
+
+.featured-routes {
+  width: 100%;
+  margin-top: 24px;
+}
+
+/*    Header    */
+
+.featured-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     margin-bottom: 16px;
+}
+
+.featured-header h2 {
+     font-size: 1.1rem;
+     font-weight: 600;
+     color: #ffffff;
+}
+
+.featured-header .link-btn {
+     background: none;
+     border: none;
+     color: var(--yellow-1);
+     font-weight: 500;
+     cursor: pointer;
+}
+
+
+/*      LISTA DE RUTAS            */
+
+
+/*     SCROLL HORIZONTAL MOVIL    */
+.featured-list {
+     display: flex;
+     gap: 16px;
+     overflow-x: auto;
+     padding-bottom: 8px;
+     scroll-snap-type: x mandatory;
+}
+
+
+/*      TARJETA RUTA              */
+
+
+.route-card {
+     background: rgba(255, 255, 255, 0.05);
+     border-radius: 20px;
+     overflow: hidden;
+
+     min-width: 240px;
+     max-width: 280px;
+     flex-shrink: 0;
+
+     display: flex;
+     flex-direction: column;
+
+     scroll-snap-align: start;
+}
+
+/* Imagen */
+
+.route-card img {
+     width: 100%;
+     height: 160px;
+     object-fit: cover;
+     display: block;
+}
+
+
+/*      CONTENIDO TARJETA         */
+
+
+.route-info {
+     padding: 14px;
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+     color: #ffffff;
+}
+
+.route-info h3 {
+     font-size: 0.95rem;
+     font-weight: 600;
+     margin: 0;
+}
+
+
+/*      TAGS                      */
+
+
+.route-tags {
+     display: flex;
+     gap: 8px;
+}
+
+.tag {
+     font-size: 0.7rem;
+     padding: 4px 8px;
+     border-radius: 999px;
+     background: rgba(255, 255, 255, 0.08);
+     color: var(--beige);
+     ont-weight: 500;
+}
+
+
+/*      STATS        */
+
+
+.route-stats {
+     font-size: 0.8rem;
+     color: #cbd5e1;
+     display: flex;
+     gap: 6px;
+     align-items: center;
+}

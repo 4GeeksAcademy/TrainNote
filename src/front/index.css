@@ -1,0 +1,50 @@
+/* ===============================
+   GLOBAL RESET & BASE
+   =============================== */
+
+/* Importar el sistema SIEMPRE primero */
+@import "./styles/design-system.css";
+@import "./styles/ui.css";
+
+/* Reset básico */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tipografía base */
+body {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Links */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+/* Quitar estilos default de botones */
+
+button {
+  font-family: inherit;
+  background: none;
+  border: none;
+  color: inherit;
+}

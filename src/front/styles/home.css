@@ -1,0 +1,89 @@
+/* ===============================
+   HOME PAGE
+================================ */
+
+.home {
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    var(--bg-main) 0%,
+    #081521 100%
+  );
+  display: flex;
+  justify-content: center;
+  padding-bottom: 90px;
+}
+
+.home-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+
+/* === Header === */
+
+.home-header {
+  width: 100%;
+  max-width: 1200px;
+  padding: var(--space-sm) var(--space-md);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  color: var(--text-primary);
+}
+
+.home-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.home-icon {
+  font-size: 1.2rem;
+}
+
+.home-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+
+/* === Avatar === */
+
+.user-avatar {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+}
+
+.user-avatar img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-primary);
+}
+
+
+/* === Logout button (local for now) === */
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+}

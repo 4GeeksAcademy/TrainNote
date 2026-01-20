@@ -1,0 +1,163 @@
+/* =====================================================
+   UI SYSTEM
+   Reglas visuales comunes para todo el proyecto
+   ===================================================== */
+
+
+/* ===============================
+   PANELS / CARDS / WINDOWS
+================================ */
+
+.ui-panel {
+  background: var(--panel-bg);
+  padding: var(--space-lg);
+  border-radius: 22px;
+  box-shadow: var(--shadow-soft);
+}
+
+.ui-panel--compact {
+  padding: var(--space-md);
+}
+
+.ui-panel:hover {
+  background: linear-gradient(
+    180deg,
+    #1a3550,
+    #12283a
+  );
+}
+
+
+/* ===============================
+   BUTTONS
+================================ */
+
+.ui-btn {
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: filter 0.2s ease, background 0.2s ease;
+}
+
+.ui-btn--primary {
+  background: var(--accent-primary);
+  color: var(--bg-main);
+}
+
+.ui-btn--secondary {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.ui-btn--danger {
+  background: var(--accent-warning);
+  color: var(--bg-main);
+}
+
+.ui-btn:hover {
+  filter: brightness(1.1);
+}
+
+.ui-btn--primary:hover {
+  background: var(--accent-secondary);
+  filter: none; /* opcional, para que no se mezcle */
+}
+
+/* ===============================
+   INPUTS & FORMS
+================================ */
+
+.ui-input,
+.ui-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-soft);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.ui-input::placeholder,
+.ui-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.ui-input:focus,
+.ui-textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.ui-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+
+/* ===============================
+   TYPOGRAPHY
+================================ */
+
+.ui-title {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.ui-subtitle {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.ui-text {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+
+/* ===============================
+   UTILITY
+================================ */
+
+.ui-divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: var(--space-md) 0;
+}
+
+
+.ui-btn.ui-btn--primary {
+  background: #f2cc0c;
+  color: #0c1a26;
+}
+
+.ui-btn.ui-btn--primary:hover {
+  background: #f2b90c;
+}
+
+/* ===============================
+   CTA / START ROUTE BUTTON
+================================ */
+
+.ui-btn--cta {
+  width: 100%;
+  padding: 18px 24px;      /* más alto */
+  border-radius: 16px;
+  font-size: 1,5rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(242, 204, 12, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.ui-btn.ui-btn--primary.ui-btn--cta {
+  font-size: 1.4rem; /* +2–4pt aprox */
+}

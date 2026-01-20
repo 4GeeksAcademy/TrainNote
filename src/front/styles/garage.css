@@ -1,0 +1,69 @@
+/* ===============================
+   GARAGE
+================================ */
+
+.garage {
+  margin-top: var(--space-lg);
+}
+
+.garage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.garage-list {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  padding-bottom: var(--space-sm);
+}
+
+/* === Bike card specifics === */
+
+.bike-card {
+  min-width: 280px;
+  position: relative;
+}
+
+.bike-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  margin-bottom: var(--space-sm);
+}
+
+.bike-card h3 {
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.specs {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.bike-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bike-footer span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* === Badge === */
+
+.badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 0.65rem;
+  padding: 4px 10px;
+  background: var(--accent-warning);
+  color: var(--bg-main);
+}
