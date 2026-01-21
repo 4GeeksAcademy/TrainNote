@@ -70,7 +70,7 @@ class Readings(db.Model):
 class Status(db.Model):
     __tablename__ = 'status'
     id: Mapped[int] = mapped_column(primary_key=True)
-    status: Mapped[]
+    status: Mapped[bool] = mapped_column(Boolean)
 
 
     def serialize(self):
