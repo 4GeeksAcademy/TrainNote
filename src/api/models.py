@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, ForeignKey, Enum as SQLEnum, date
+from sqlalchemy import String, Boolean, ForeignKey, Enum as SQLEnum, date, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
@@ -42,6 +42,15 @@ class Students(db.Model):
     user_type: Mapped[Usser_Type] = mapped_column(SQLEnum(Usser_Type), name="usser_type_enum",
         nullable=False,
         default=Usser_Type.STUDENT)
+    
+#GROUPS TABLE
+class Groups(db.Model):
+    __tablename__ = 'groups'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(20), nullable =False)
+    description: Mapped[str] = mapped_column(String(100), nullable=False)
+    
+
 
 # TEACHERS TABLES 
 
@@ -51,7 +60,17 @@ class Todos(db.Model):
     description: Mapped[str] = mapped_column(String(300), nullable=False)
     mediaLink: Mapped[str] = mapped_column(String(300))
     time: Mapped[str] = mapped_column(date, nullable=False)
-    
+    note: Mapped[int] = mapped_column(Integer, nullable=False)
+
+class Readings(db.Model):
+    __tablename__ = 'readings'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mediaLink: Mapped[str] = mapped_column(String(300))
+
+class Status(db.Model):
+    __tablename__ = 'status'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[]
 
 
     def serialize(self):
