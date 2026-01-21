@@ -1,14 +1,57 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Boolean, ForeignKey, Enum as SQLEnum, date
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
-class User(db.Model):
+#ROLES TABLES
+
+class Usser_Type(Enum):
+    ADMIN = "admin"
+    TEACHER = "teacher"
+    STUDENT = "student"
+
+class Admnins(db.Model):
+    __tablename__ = 'admins'
     id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(20), nullable =False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
+    user_type: Mapped[Usser_Type] = mapped_column(SQLEnum(Usser_Type), name="usser_type_enum",
+        nullable=False,
+        default=Usser_Type.ADMIN)
+    
+
+class Teachers(db.Model):
+    __tablename__ = 'teachers'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(20), nullable =False)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(nullable=False)
+    user_type: Mapped[Usser_Type] = mapped_column(SQLEnum(Usser_Type), name="usser_type_enum",
+        nullable=False,
+        default=Usser_Type.TEACHER)
+    
+
+class Students(db.Model):
+    __tablename__ = 'students'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(20), nullable =False)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(nullable=False)
+    user_type: Mapped[Usser_Type] = mapped_column(SQLEnum(Usser_Type), name="usser_type_enum",
+        nullable=False,
+        default=Usser_Type.STUDENT)
+
+# TEACHERS TABLES 
+
+class Todos(db.Model):
+    __tablename__ = 'todos'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(String(300), nullable=False)
+    mediaLink: Mapped[str] = mapped_column(String(300))
+    time: Mapped[str] = mapped_column(date, nullable=False)
+    
 
 
     def serialize(self):
