@@ -1,0 +1,87 @@
+.footer {
+  background: #020617;
+  padding: 3rem 2rem 2.5rem;
+  text-align: center;
+}
+
+/* CTA */
+.footer-cta {
+  max-width: 1100px;
+  margin: 0 auto 2.5rem;
+}
+
+.footer-cta-btn {
+  width: 100%;
+  background: #facc15;
+  color: #020617;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 1rem 1.5rem;
+  border-radius: 14px;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.footer-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(250, 204, 21, 0.25);
+}
+
+.footer-cta-btn .arrow {
+  font-size: 1rem;
+}
+
+/* Divider */
+.footer-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 2rem 0;
+}
+
+/* Social */
+.footer-social {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.footer-social i {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #cbd5f5;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.footer-social i:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Legal */
+.footer-copy {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 0.5rem;
+}
+
+.footer-links {
+  font-size: 0.65rem;
+  color: #f97316;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  cursor: pointer;
+}
