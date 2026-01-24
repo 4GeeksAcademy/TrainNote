@@ -1,117 +1,101 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, ForeignKey, Date, Integer
+from sqlalchemy import String, Boolean, ForeignKey, Date, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
     __tablename__ = 'user'
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, default=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    role = mapped_column(SQLEnum('ADMIN', 'TEACHER', 'STUDENT', name='role_enum'), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    students_groups: Mapped[list["Students_Group"]] = relationship(back_populates='user')
+    groups_admin: Mapped[list["Group"]] = relationship(back_populates='admin', foreign_keys="Group.admin_id")
+    groups_teacher: Mapped[list["Group"]] = relationship(back_populates='teacher', foreign_keys="Group.teacher_id")
+    todos: Mapped[list["Todo"]] = relationship(back_populates='teacher')
+    readings: Mapped[list["Reading"]] = relationship(back_populates='teacher')
+    statuses: Mapped[list["Status"]] = relationship(back_populates='teacher')
 
-# ROLES TABLES
 
-
-class Admins(db.Model):
-    __tablename__ = 'admins'
+class Students_Group(db.Model):
+    __tablename__ = 'student_group'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
-    user_type: Mapped[str] = mapped_column(
-        String(10), default="admin", nullable=False)
-    admin_groups: Mapped[list['Groups']] = relationship(back_populates='admin')
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    user: Mapped["User"] = relationship(back_populates='students_groups')
+    group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
+    group: Mapped["Group"] = relationship(back_populates='students')
+    todos: Mapped[list["Todo"]] = relationship(back_populates='student')
+    submissions: Mapped[list["Submission"]] = relationship(back_populates='student')
 
 
-class Teachers(db.Model):
-    __tablename__ = 'teachers'
+class Group(db.Model):
+    __tablename__ = 'group'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
-    user_type: Mapped[str] = mapped_column(
-        String(10), default="teacher", nullable=False)
-    teacher_group: Mapped[list['Groups']] = relationship(
-        back_populates='teacher_principal')
-    status: Mapped[list['Status']] = relationship(back_populates='teacher')
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(255))
+    admin_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    admin: Mapped["User"] = relationship(back_populates='groups_admin', foreign_keys="Group.admin_id")
+    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    teacher: Mapped["User"] = relationship(back_populates='groups_teacher', foreign_keys="Group.teacher_id")
+    students: Mapped[list["Students_Group"]] = relationship(back_populates='group')
+    todos: Mapped[list["Todo"]] = relationship(back_populates='group')
+    readings: Mapped[list["Reading"]] = relationship(back_populates='group')
 
 
-class Students(db.Model):
-    __tablename__ = 'students'
+class Todo(db.Model):
+    __tablename__ = 'todo'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
-    user_type: Mapped[str] = mapped_column(
-        String(10), default="student", nullable=False)
-    groups_id: Mapped[int] = mapped_column(Integer, ForeignKey('groups.id'))
-    group: Mapped['Groups'] = relationship(back_populates='students')
-    students_status: Mapped[list['Status']] = relationship(
-        back_populates='student')
+    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(String(255))
+    due_date: Mapped[Date] = mapped_column(Date, nullable=False)
+    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    teacher: Mapped["User"] = relationship(back_populates='todos')
+    group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
+    group: Mapped["Group"] = relationship(back_populates='todos')
+    student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'))
+    student: Mapped["Students_Group"] = relationship(back_populates='todos')
+    submissions: Mapped[list["Submission"]] = relationship(back_populates='todo')
 
 
-# GROUPS TABLE
-
-class Groups(db.Model):
-    __tablename__ = 'groups'
+class Submission(db.Model):
+    __tablename__ = 'submission'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(20), nullable=False)
-    description: Mapped[str] = mapped_column(String(100), nullable=False)
-    admin_id: Mapped[int] = mapped_column(Integer, ForeignKey('admins.id'))
-    admin: Mapped['Admins'] = relationship(back_populates='admin_groups')
-    teacher_id: Mapped[int] = mapped_column(Integer, ForeignKey('teachers.id'))
-    teacher_principal: Mapped['Teachers'] = relationship(
-        back_populates='teacher_group')
-    students: Mapped[list['Students']] = relationship(back_populates='group')
-    groups_reading: Mapped[list['Readings']] = relationship(
-        back_populates='group_reading')
-    todos: Mapped[list['Todos']] = relationship(back_populates='group_todo')
-
-
-# TEACHERS TABLES
-
-class Todos(db.Model):
-    __tablename__ = 'todos'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    description: Mapped[str] = mapped_column(String(300), nullable=False)
-    mediaLink: Mapped[str] = mapped_column(String(300))
-    time: Mapped[str] = mapped_column(Date, nullable=False)
-    note: Mapped[int] = mapped_column(Integer, nullable=False)
-    group_id: Mapped[int] = mapped_column(Integer, ForeignKey('groups.id'))
-    group_todo: Mapped['Groups'] = relationship(back_populates='todos')
-    status_todos: Mapped[list['Status']] = relationship(back_populates='todo')
-
-
-class Readings(db.Model):
-    __tablename__ = 'readings'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    mediaLink: Mapped[str] = mapped_column(String(300))
-    group_id: Mapped[int] = mapped_column(Integer, ForeignKey('groups.id'))
-    group_reading: Mapped['Groups'] = relationship(
-        back_populates='groups_reading')
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    response_url: Mapped[str] = mapped_column(String(300))
+    todo_id: Mapped[int] = mapped_column(ForeignKey('todo.id'), nullable=False)
+    todo: Mapped["Todo"] = relationship(back_populates='submissions')
+    student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'), nullable=False)
+    student: Mapped["Students_Group"] = relationship(back_populates='submissions')
+    statuses: Mapped[list["Status"]] = relationship(back_populates='submission')
 
 
 class Status(db.Model):
     __tablename__ = 'status'
     id: Mapped[int] = mapped_column(primary_key=True)
-    status: Mapped[bool] = mapped_column(Boolean)
-    teacher_id: Mapped[int] = mapped_column(Integer, ForeignKey('teachers.id'))
-    teacher: Mapped['Teachers'] = relationship(back_populates='status')
-    student_id: Mapped[int] = mapped_column(Integer, ForeignKey('students.id'))
-    student: Mapped['Students'] = relationship(
-        back_populates='students_status')
-    todo_id: Mapped[int] = mapped_column(Integer, ForeignKey('todos.id'))
-    todo: Mapped['Todos'] = relationship(back_populates='status_todos')
+    submission_id: Mapped[int] = mapped_column(ForeignKey('submission.id'), nullable=False)
+    submission: Mapped["Submission"] = relationship(back_populates='statuses')
+    state = mapped_column(SQLEnum('PENDING', 'APPROVED', 'REJECTED', name='status_enum'), nullable=False, default='PENDING')
+    feedback: Mapped[str] = mapped_column(String(255))
+    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    teacher: Mapped["User"] = relationship(back_populates='statuses')
 
+
+class Reading(db.Model):
+    __tablename__ = 'reading'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    content: Mapped[str] = mapped_column(String(1000), nullable=False)
+    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    teacher: Mapped["User"] = relationship(back_populates='readings')
+    group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
+    group: Mapped["Group"] = relationship(back_populates='readings')
+    
     def serialize(self):
         return {
             "id": self.id,
-             "email": self.email,
+            "email": self.email,
         }
