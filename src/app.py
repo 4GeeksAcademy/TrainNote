@@ -157,6 +157,100 @@ def login():
         }), 500
 
 
+@app.route("/groups/<int:group_id>/students", methods=["POST"])
+@jwt_required()
+@role_required("ADMIN")
+def add_student_to_group(group_id):
+    body = request.get_json()
+
+    if not body or "user_id" not in body:
+        return jsonify({"msg": "user_id es requerido"}), 400
+
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"msg": "Grupo no encontrado"}), 404
+
+    user = User.query.get(body["user_id"])
+    if not user or user.role != "STUDENT":
+        return jsonify({"msg": "Usuario no válido"}), 400
+
+    exists = Students_Group.query.filter_by(
+        user_id=user.id,
+        group_id=group_id
+    ).first()
+
+    if exists:
+        return jsonify({"msg": "El estudiante ya está en el grupo"}), 409
+
+    student_group = Students_Group(
+        user_id=user.id,
+        group_id=group_id
+    )
+
+    db.session.add(student_group)
+    db.session.commit()
+
+    return jsonify({"msg": "Estudiante agregado al grupo"}), 201
+
+
+@app.route("/groups/<int:group_id>/students", methods=["GET"])
+@jwt_required()
+@role_required("TEACHER", "ADMIN")
+def get_group_students(group_id):
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"msg": "Grupo no encontrado"}), 404
+
+    students = []
+    for sg in group.students:
+        students.append({
+            "user_id": sg.user.id,
+            "name": sg.user.name,
+            "email": sg.user.email
+        })
+
+    return jsonify(students), 200
+
+
+@app.route("/groups/<int:group_id>/students/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+@role_required("ADMIN")
+def remove_student_from_group(group_id, user_id):
+    student_group = Students_Group.query.filter_by(
+        group_id=group_id,
+        user_id=user_id
+    ).first()
+
+    if not student_group:
+        return jsonify({"msg": "Relación no encontrada"}), 404
+
+    db.session.delete(student_group)
+    db.session.commit()
+
+    return jsonify({"msg": "Estudiante removido del grupo"}), 200
+
+
+@app.route("/my-groups", methods=["GET"])
+@jwt_required()
+@role_required("STUDENT")
+def get_my_groups():
+    current_user = get_jwt_identity()
+
+    relations = Students_Group.query.filter_by(
+        user_id=current_user["id"]
+    ).all()
+
+    result = []
+    for sg in relations:
+        result.append({
+            "group_id": sg.group.id,
+            "group_name": sg.group.name,
+            "description": sg.group.description
+        })
+
+    return jsonify(result), 200
+
+
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
