@@ -11,8 +11,23 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
+from functools import wraps
 # from models import Person
+
+
+def role_required(*roles):
+    def wrapper(fn):
+        @wraps(fn)
+        @jwt_required()
+        def decorated(*args, **kwargs):
+            identity = get_jwt_identity()
+            if identity["role"] not in roles:
+                return jsonify({"msg": "Acceso no autorizado"}), 403
+            return fn(*args, **kwargs)
+        return decorated
+    return wrapper
+
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -68,6 +83,8 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # avoid cache memory
     return response
 
+#                  ENDPOINT REGISTER
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -112,6 +129,8 @@ def register():
             'error': str(e)
         }), 500
 
+#             ENDPOINT LOGIN
+
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -155,6 +174,103 @@ def login():
             'msg': 'Error interno del servidor',
             'error': str(e)
         }), 500
+
+#             ENDPOINTS GROUP
+
+
+@app.route("/groups", methods=["POST"])
+@role_required("ADMIN")
+def create_group():
+    body = request.get_json()
+
+    if not body or "name" not in body or "teacher_id" not in body:
+        return jsonify({"msg": "Faltan datos obligatorios"}), 400
+
+    admin_id = get_jwt_identity()["user_id"]
+
+    group = Group(
+        name=body["name"],
+        description=body.get("description"),
+        admin_id=admin_id,
+        teacher_id=body["teacher_id"]
+    )
+
+    db.session.add(group)
+    db.session.commit()
+
+    return jsonify({"msg": "Grupo creado", "group_id": group.id}), 201
+
+
+@app.route("/groups", methods=["GET"])
+@role_required("ADMIN", "TEACHER")
+def get_groups():
+    identity = get_jwt_identity()
+
+    if identity["role"] == "ADMIN":
+        groups = Group.query.filter_by(admin_id=identity["user_id"]).all()
+    else:
+        groups = Group.query.filter_by(teacher_id=identity["user_id"]).all()
+
+    return jsonify([
+        {
+            "id": g.id,
+            "name": g.name,
+            "description": g.description
+        } for g in groups
+    ]), 200
+
+
+@app.route("/groups/<int:group_id>", methods=["GET"])
+@role_required("ADMIN", "TEACHER")
+def get_group(group_id):
+    group = Group.query.get(group_id)
+
+    if not group:
+        return jsonify({"msg": "Grupo no encontrado"}), 404
+
+    return jsonify({
+        "id": group.id,
+        "name": group.name,
+        "description": group.description,
+        "teacher_id": group.teacher_id
+    }), 200
+
+
+@app.route("/groups/<int:group_id>/students", methods=["POST"])
+@role_required("ADMIN")
+def add_student_to_group(group_id):
+    body = request.get_json()
+
+    if not body or "student_id" not in body:
+        return jsonify({"msg": "student_id requerido"}), 400
+
+    relation = Students_Group(
+        user_id=body["student_id"],
+        group_id=group_id
+    )
+
+    db.session.add(relation)
+    db.session.commit()
+
+    return jsonify({"msg": "Estudiante agregado al grupo"}), 201
+
+
+@app.route("/groups/<int:group_id>/teacher", methods=["POST"])
+@role_required("ADMIN")
+def assign_teacher(group_id):
+    body = request.get_json()
+
+    if not body or "teacher_id" not in body:
+        return jsonify({"msg": "teacher_id requerido"}), 400
+
+    group = Group.query.get(group_id)
+    if not group:
+        return jsonify({"msg": "Grupo no encontrado"}), 404
+
+    group.teacher_id = body["teacher_id"]
+    db.session.commit()
+
+    return jsonify({"msg": "Profesor asignado"}), 200
 
 
 # this only runs if `$ python src/main.py` is executed
