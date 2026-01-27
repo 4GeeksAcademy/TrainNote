@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import Student, Teacher, Admin
+from api.models import User, Students_Group, Group
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -74,42 +74,39 @@ def register():
     try:
         body = request.get_json(silent=True)
 
-        if body is None:
-            return jsonify({'msg': 'Debes enviar información en el body'}), 400
+        if not body:
+            return jsonify({"msg": "Debes enviar información en el body"}), 400
 
-        required_fields = ['email', 'password', 'first_name', 'last_name']
+        required_fields = ["email", "password", "name"]
         for field in required_fields:
             if field not in body:
-                return jsonify({'msg': f'El campo {field} es obligatorio'}), 400
+                return jsonify({"msg": f"El campo {field} es obligatorio"}), 400
 
-        if (
-            Student.query.filter_by(email=body['email']).first()
-            or Teacher.query.filter_by(email=body['email']).first()
-            or Admin.query.filter_by(email=body['email']).first()
-        ):
-            return jsonify({'msg': 'Este email ya está en uso'}), 409
+        if User.query.filter_by(email=body["email"]).first():
+            return jsonify({"msg": "Este email ya está en uso"}), 409
 
-        new_student = Student(
-            email=body['email'],
-            password=body['password'],
-            first_name=body['first_name'],
-            last_name=body['last_name']
+        new_user = User(
+            email=body["email"],
+            password=body["password"],
+            name=body["name"],
+            role="STUDENT",
+            is_active=True
         )
 
-        db.session.add(new_student)
+        db.session.add(new_user)
         db.session.commit()
 
-        return jsonify({'msg': 'Student creado exitosamente'}), 201
+        return jsonify({"msg": "Estudiante registrado correctamente"}), 201
 
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'msg': 'Error de integridad en la base de datos'}), 409
+        return jsonify({"msg": "Error de integridad en la base de datos"}), 409
 
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            'msg': 'Error interno del servidor',
-            'error': str(e)
+            "msg": "Error interno del servidor",
+            "error": str(e)
         }), 500
 
 
@@ -124,30 +121,34 @@ def login():
         if 'email' not in body or 'password' not in body:
             return jsonify({'msg': 'Email y password son obligatorios'}), 400
 
-        user = Student.query.filter_by(email=body['email']).first()
-        role = "Student"
+        user = None
+        role = None
 
-        if not user:
-            user = Teacher.query.filter_by(email=body['email']).first()
-            role = "Teacher"
+        users_models = [
+            (Student, "STUDENT"),
+            (Teacher, "TEACHER"),
+            (Admin, "ADMIN")
+        ]
 
-        if not user:
-            user = Admin.query.filter_by(email=body['email']).first()
-            role = "Admin"
+        for model, r in users_models:
+            user = model.query.filter_by(email=body['email']).first()
+            if user:
+                role = r
+                break
 
         if not user or user.password != body['password']:
             return jsonify({'msg': 'Credenciales incorrectas'}), 401
 
         access_token = create_access_token(
             identity={
-                "id": user.id,
+                "user_id": user.id,
                 "role": role
             }
         )
 
         return jsonify({
-            'access_token': access_token,
-            'role': role
+            "access_token": access_token,
+            "role": role
         }), 200
 
     except Exception as e:
