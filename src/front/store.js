@@ -12,12 +12,34 @@ export const initialStore=()=>{
         title: "Do my homework",
         background: null,
       }
-    ]
+    ],
+    user: null,
+    role: null,
+    isAuthenticated: false,
   }
 }
 
+
 export default function storeReducer(store, action = {}) {
   switch(action.type){
+
+    case "REGISTER_STAFF_SUCCESS":
+      return {
+        ...store,
+        user: action.payload.user,
+        role: action.payload.role,
+        isAuthenticated: true,
+        message: "Staff registrado correctamente"
+      };
+
+    case "LOGOUT":
+      return {
+        ...store,
+        user: null,
+        role: null,
+        isAuthenticated: false
+      };
+
     case 'set_hello':
       return {
         ...store,

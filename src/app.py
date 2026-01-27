@@ -14,7 +14,11 @@ from api.commands import setup_commands
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from functools import wraps
+from flask_cors import CORS
+
 # from models import Person
+
+
 
 
 def role_required(*roles):
@@ -35,6 +39,8 @@ static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+
+CORS(app)
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -83,6 +89,11 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0  # avoid cache memory
     return response
+
+@app.route('/prueba', methods=['GET'])
+def prueba():
+    users = User.query.all()
+    return jsonify([user.serialize() for user in users]), 200
 
 #                  ENDPOINT REGISTER
 
@@ -145,9 +156,9 @@ def login():
         role = None
 
         users_models = [
-            (Student, "STUDENT"),
-            (Teacher, "TEACHER"),
-            (Admin, "ADMIN")
+            ('Student', "STUDENT"),
+            ('Teacher', "TEACHER"),
+            ('Admin', "ADMIN")
         ]
 
         for model, r in users_models:
@@ -237,24 +248,6 @@ def get_group(group_id):
         "teacher_id": group.teacher_id
     }), 200
 
-
-@app.route("/groups/<int:group_id>/students", methods=["POST"])
-@role_required("ADMIN")
-def add_student_to_group(group_id):
-    body = request.get_json()
-
-    if not body or "student_id" not in body:
-        return jsonify({"msg": "student_id requerido"}), 400
-
-    relation = Students_Group(
-        user_id=body["student_id"],
-        group_id=group_id
-    )
-
-    db.session.add(relation)
-    db.session.commit()
-
-    return jsonify({"msg": "Estudiante agregado al grupo"}), 201
 
 
 @app.route("/groups/<int:group_id>/teacher", methods=["POST"])
