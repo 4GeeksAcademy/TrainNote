@@ -93,6 +93,15 @@ class Reading(db.Model):
     teacher: Mapped["User"] = relationship(back_populates='readings')
     group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
     group: Mapped["Group"] = relationship(back_populates='readings')
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "titte": self.title,
+            "content": self.content,
+            "teacher_id": self.teacher_id,
+            "group_id": self.group_id
+        }
     
     def serialize(self):
         return {
