@@ -1,15 +1,22 @@
-import { Outlet } from "react-router-dom/dist"
-import ScrollToTop from "../components/ScrollToTop"
-import { Navbar } from "../components/Navbar"
-import { Footer } from "../components/Footer"
+import { Outlet } from "react-router-dom";
+import Footer from "../components/Footer";
+import { Loader } from "../components/Loader/Loader";
+import { useLoader } from "../context/loaderContext";
+import "../styles/footer.css";
+import AiChatDialog from "../components/AiChatDialog";
 
-// Base component that maintains the navbar and footer throughout the page and the scroll to top functionality.
 export const Layout = () => {
-    return (
-        <ScrollToTop>
-            <Navbar />
-                <Outlet />
-            <Footer />
-        </ScrollToTop>
-    )
-}
+  const { isLoading } = useLoader();
+
+  return (
+    <>
+      {isLoading && <Loader />}
+
+      <div className={`app-root ${isLoading ? "is-loading" : ""}`}>
+        <Outlet />
+        <AiChatDialog floating />
+        <Footer />
+      </div>
+    </>
+  );
+};

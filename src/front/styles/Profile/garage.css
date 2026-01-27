@@ -1,0 +1,231 @@
+/* ===============================
+   GARAGE
+================================ */
+
+.garage {
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.garage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.garage-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.03em;
+}
+
+.garage-header h2::before {
+  content: "🚴‍♂️ ";
+  font-size: 1.1em;
+}
+
+.add-bike:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.garage-list {
+  display: flex;
+  gap: var(--space-md);
+  padding-bottom: var(--space-24);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+}
+
+/* ===============================
+   BIKE CARD
+================================ */
+
+.bike-card {
+  position: relative;
+  flex: 0 0 320px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    border-color 150ms ease;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 380px; /* más altas */
+}
+
+.bike-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+  background: var(--bg-card-hover);
+}
+
+.bike-card--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-teal-500-rgb), 0.2);
+}
+
+/* === Badge === */
+.badge,
+.badge--active {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-4) var(--space-10);
+  background: rgba(22, 163, 74, 0.9);
+  color: var(--color-btn-primary-text);
+  border-radius: var(--radius-full);
+  z-index: 2;
+  box-shadow: var(--shadow-sm);
+}
+
+/* === Imagen clicable (header) === */
+.bike-card-header {
+  flex-shrink: 0;
+  width: 100%;
+  background: #020617;
+  border-bottom: 1px solid var(--color-card-border-inner);
+  display: block;
+}
+
+.bike-card-image-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: 100%;
+  display: block;
+  cursor: pointer;
+}
+
+.bike-card-image,
+.bike-card-image-placeholder {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+/* === Contenido === */
+.bike-card-body {
+  flex: 1;
+  padding: var(--space-16) var(--space-16) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  background: linear-gradient(180deg, #020617 0%, #020617 40%, #020617 100%);
+}
+
+.bike-card-title,
+.bike-card-specs {
+  margin-left: var(--space-sm);
+  margin-right: var(--space-sm);
+}
+
+.bike-card-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  line-height: var(--line-height-tight);
+}
+
+.bike-card-specs {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* === Footer === */
+.bike-card-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-14) var(--space-16) var(--space-16);
+  background: #020617;
+  border-top: 1px solid var(--color-card-border-inner);
+}
+
+.bike-card-km {
+  margin: var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.bike-card-km::before {
+  content: "🚴";
+  font-size: var(--font-size-base);
+}
+
+/* === Acciones === */
+.bike-card-actions {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.bike-card-actions .ui-btn {
+  flex: 1;
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  padding-block: var(--space-10);
+}
+
+.bike-card-delete-btn {
+  flex: 0;
+  min-width: 48px;
+  padding-inline: var(--space-10);
+  padding-block: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 768px) {
+  .garage-list {
+    gap: var(--space-sm);
+  }
+
+  .add-bike {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .garage {
+    padding: var(--space-sm);
+  }
+
+  .bike-card {
+    flex: 0 0 260px;
+  }
+
+  .bike-card-image,
+  .bike-card-image-placeholder {
+    height: 180px;
+  }
+}

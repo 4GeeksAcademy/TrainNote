@@ -1,0 +1,98 @@
+/* ===============================
+   PROFILE PAGE
+================================ */
+
+/* === Dropdown === */
+.settings-dropdown {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  background: var(--bg-main);
+  overflow: hidden;
+}
+
+/* === Page layout === */
+.profile-page {
+  min-height: 100vh;
+  padding-top: 64px;
+  padding-bottom: 40px;
+  display: flex;
+  justify-content: center;
+  background: var(--bg-page); /* ✅ variable global */
+}
+
+.profile-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+/* === Stats === */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+/* Las pastillas individuales */
+.stat-card {
+  text-align: center;
+  background: var(--panel-bg);
+  border-radius: 28px;
+  padding: 32px 40px;
+  box-shadow: var(--shadow-soft);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  background: var(--panel-bg-hover);
+  transform: translateY(-4px);
+}
+
+/* Tipografía */
+.stat-card p {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-xs);
+}
+
+.stat-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .profile-wrapper {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .stats {
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .stat-card {
+    flex: 1;
+    padding: var(--space-sm);
+    border-radius: 18px;
+  }
+
+  .stat-card h3 {
+    font-size: 1rem;
+  }
+
+  .stat-card p {
+    font-size: 0.65rem;
+  }
+}
