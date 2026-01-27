@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import Students_Group, Group, Todo, Submission, Status, User, Student, Teacher, Admin
+from api.models import Students_Group, Group, Todo, Submission, Status, User
 from api.models import db
 from api.routes import api
 from api.admin import setup_admin
@@ -177,10 +177,10 @@ def register_staff():
         return jsonify({"msg": "El campo name no puede estar vacío"}), 400
     if 'role' not in body:
         return jsonify({"msg": "Determine el rol del nuevo usuario"}), 400
-    existing_user = models.User.query.filter_by(email=body['email']).first()
+    existing_user = User.query.filter_by(email=body['email']).first()
     if existing_user:
         return jsonify({"msg": "User already exists"}), 400
-    new_admin = models.User(
+    new_admin = User(
         email=body['email'],
         password=body['password'],
         name=body['name'],
@@ -190,6 +190,7 @@ def register_staff():
     db.session.add(new_admin)
     db.session.commit()
     return jsonify({"msg": f"Usuario {body['role']} registrado exitosamente"}), 201
+
 
 @app.route('/todos-creation', methods=['POST'])
 def create_todo():
@@ -202,7 +203,7 @@ def create_todo():
         return jsonify({"msg": "El campo description no puede estar vacío"}), 400
     if 'due_date' not in body:
         return jsonify({"msg": "El campo due_date no puede estar vacío"}), 400
-    new_todo = models.Todo(
+    new_todo = Todo(
         title=body['title'],
         description=body['description'],
         due_date=body['due_date'],
@@ -211,9 +212,10 @@ def create_todo():
     db.session.commit()
     return jsonify({"msg": "Todo created successfully"}), 201
 
+
 @app.route('/todos', methods=['GET'])
 def get_todos():
-    todos = models.Todo.query.all()
+    todos = Todo.query.all()
     todos_list = []
     for todo in todos:
         todos_list.append({
@@ -227,11 +229,12 @@ def get_todos():
         })
     return jsonify(todos_list), 200
 
+
 @app.route('/todos/<int:todo_id>', methods=['GET'])
 def get_todo_by_id(todo_id):
-    todo = models.Todo.query.get(todo_id)
+    todo = Todo.query.get(todo_id)
     if not todo:
-        return jsonify({"msg": "Todo not found"}), 404
+        return jsonify({"msg": "Tarea no encontrada"}), 404
     todo_data = {
         'id': todo.id,
         'title': todo.title,
@@ -239,13 +242,13 @@ def get_todo_by_id(todo_id):
         'due_date': todo.due_date.isoformat(),
         'teacher_id': todo.teacher_id,
         'group_id': todo.group_id,
-        'student_id': todo.student_id
     }
     return jsonify(todo_data), 200
 
+
 @app.route('/todos/<int:todo_id>', methods=['PUT'])
 def update_todo(todo_id):
-    todo = models.Todo.query.get(todo_id)
+    todo = Todo.query.get(todo_id)
     if not todo:
         return jsonify({"msg": "tarea no encontrada"}), 404
     body = request.get_json(silent=True)
@@ -260,18 +263,20 @@ def update_todo(todo_id):
     db.session.commit()
     return jsonify({"msg": "Cambios aplicados a la tarea"}), 200
 
+
 @app.route('/todos/<int:todo_id>', methods=['DELETE'])
 def delete_todo(todo_id):
-    todo = models.Todo.query.get(todo_id)
+    todo = Todo.query.get(todo_id)
     if not todo:
         return jsonify({"msg": "tarea no encontrada"}), 404
     db.session.delete(todo)
     db.session.commit()
     return jsonify({"msg": "tarea eliminada exitosamente"}), 200
 
+
 @app.route('/statuses', methods=['GET'])
 def get_statuses():
-    statuses = models.Status.query.all()
+    statuses = Status.query.all()
     statuses_list = []
     for status in statuses:
         statuses_list.append({
@@ -282,9 +287,10 @@ def get_statuses():
         })
     return jsonify(statuses_list), 200
 
+
 @app.route('/statuses/<int:status_id>', methods=['GET'])
 def get_status_by_id(status_id):
-    status = models.Status.query.get(status_id)
+    status = Status.query.get(status_id)
     if not status:
         return jsonify({"msg": "No hay calificación disponible"}), 404
     status_data = {
@@ -295,9 +301,10 @@ def get_status_by_id(status_id):
     }
     return jsonify(status_data), 200
 
+
 @app.route('/statuses/<int:status_id>', methods=['PUT'])
 def update_status(status_id):
-    status = models.Status.query.get(status_id)
+    status = Status.query.get(status_id)
     if not status:
         return jsonify({"msg": "No hay calificación disponible"}), 404
     body = request.get_json(silent=True)
@@ -310,6 +317,7 @@ def update_status(status_id):
     db.session.commit()
     return jsonify({"msg": "Calificación actualizada exitosamente"}), 200
 
+
 @app.route('/statuses/<int:status_id>', methods=['POST'])
 def create_status(status_id):
     body = request.get_json(silent=True)
@@ -319,7 +327,7 @@ def create_status(status_id):
         return jsonify({"msg": "El campo submission_id no puede estar vacío"}), 400
     if 'state' not in body:
         return jsonify({"msg": "El campo state no puede estar vacío"}), 400
-    new_status = models.Status(
+    new_status = Status(
         submission_id=body['submission_id'],
         state=body['state'],
         feedback=body.get('feedback', '')
