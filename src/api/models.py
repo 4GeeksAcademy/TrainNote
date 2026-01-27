@@ -20,6 +20,15 @@ class User(db.Model):
     readings: Mapped[list["Reading"]] = relationship(back_populates='teacher')
     statuses: Mapped[list["Status"]] = relationship(back_populates='teacher')
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "role": self.role,
+            "is_active": self.is_active
+        }
+
 
 class Students_Group(db.Model):
     __tablename__ = 'student_group'
@@ -30,7 +39,12 @@ class Students_Group(db.Model):
     group: Mapped["Group"] = relationship(back_populates='students')
     todos: Mapped[list["Todo"]] = relationship(back_populates='student')
     submissions: Mapped[list["Submission"]] = relationship(back_populates='student')
-
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "group_id": self.group_id
+        }
 
 class Group(db.Model):
     __tablename__ = 'group'
@@ -44,6 +58,14 @@ class Group(db.Model):
     students: Mapped[list["Students_Group"]] = relationship(back_populates='group')
     todos: Mapped[list["Todo"]] = relationship(back_populates='group')
     readings: Mapped[list["Reading"]] = relationship(back_populates='group')
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "admin_id": self.admin_id,
+            "teacher_id": self.teacher_id
+        }
 
 
 class Todo(db.Model):
@@ -59,6 +81,16 @@ class Todo(db.Model):
     student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'))
     student: Mapped["Students_Group"] = relationship(back_populates='todos')
     submissions: Mapped[list["Submission"]] = relationship(back_populates='todo')
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "due_date": self.due_date.isoformat(),
+            "teacher_id": self.teacher_id,
+            "group_id": self.group_id,
+            "student_id": self.student_id
+        }
 
 
 class Submission(db.Model):
@@ -71,6 +103,14 @@ class Submission(db.Model):
     student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'), nullable=False)
     student: Mapped["Students_Group"] = relationship(back_populates='submissions')
     statuses: Mapped[list["Status"]] = relationship(back_populates='submission')
+    def serialize(self):
+        return {
+            "id": self.id,
+            "description": self.description,
+            "response_url": self.response_url,
+            "todo_id": self.todo_id,
+            "student_id": self.student_id
+        }
 
 
 class Status(db.Model):
@@ -82,6 +122,14 @@ class Status(db.Model):
     feedback: Mapped[str] = mapped_column(String(255))
     teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
     teacher: Mapped["User"] = relationship(back_populates='statuses')
+    def serialize(self):
+        return {
+            "id": self.id,
+            "submission_id": self.submission_id,
+            "state": self.state,
+            "feedback": self.feedback,
+            "teacher_id": self.teacher_id
+        }
 
 
 class Reading(db.Model):
@@ -93,9 +141,11 @@ class Reading(db.Model):
     teacher: Mapped["User"] = relationship(back_populates='readings')
     group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
     group: Mapped["Group"] = relationship(back_populates='readings')
-    
     def serialize(self):
         return {
             "id": self.id,
-            "email": self.email,
+            "title": self.title,
+            "content": self.content,
+            "teacher_id": self.teacher_id,
+            "group_id": self.group_id
         }
