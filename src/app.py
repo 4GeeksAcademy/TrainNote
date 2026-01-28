@@ -4,7 +4,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
-from flask_swagger import swagger
+#from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
 from api.models import Students_Group, Group, Todo, Submission, Status, User, Reading
 from api.models import db
@@ -15,8 +15,14 @@ from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from functools import wraps
 from flask_cors import CORS
-
+from dotenv import load_dotenv
+import os
 # from models import Person
+
+load_dotenv()
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 
 
