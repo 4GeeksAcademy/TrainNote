@@ -426,6 +426,257 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=PORT, debug=True)
 
 
+
+
+
+
+
+# SUBMISION POST SUBE TAREA DE UN ESTUDIANTE CON ID
+@app.route("/submission", methods=["POST"])
+def submission():
+    try:
+        body = request.get_json(silent=True)
+        if body is None:
+            return jsonify({'msg': 'Debes enviar información en el body'}), 400
+
+        todo_id = body.get("todo_id")
+        student_id = body.get("student_id")
+        description = body.get("description")
+        response_url = body.get("response_url")
+
+        if todo_id is None or student_id is None:
+            return jsonify({"msg": "todo_id y student_id son obligatorios"}), 400
+
+        if not description and not response_url:
+            return jsonify({"msg": "Debes enviar description o response_url"}), 400
+
+        todo = Todo.query.get(todo_id)
+        if not todo:
+            return jsonify({"msg": "La tarea no existe"}), 404
+
+        user = User.query.get(student_id)
+        if not user:
+            return jsonify({"msg": "Usuario no existe"}), 404
+
+        if user.role.lower() != "student":  # el student tiene q venir en minuscula sino ponerle un .lower()
+            return jsonify({"msg": "Solo un alumno puede crear una entrega"}), 403
+
+        new_submission = Submission(
+
+            description=description,
+            response_url=response_url,
+            todo_id=todo_id,
+            student_id=student_id
+
+        )
+
+        db.session.add(new_submission)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Entrega creada",
+            "submission": {
+                "id": new_submission.id,
+                "todo_id": new_submission.todo_id,
+                "student_id": new_submission.student_id,
+                "description": new_submission.description,
+                "response_url": new_submission.response_url
+
+            }
+
+
+
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Errpr interno del servidor", "error": str(e)}), 500
+
+# SUBMISION PUT EDITA TAREA SUBIDA POR UN ESTUDIANTE CON ID
+@app.route("/submission/<int:submission_id>", methods=["PUT"])
+def update_submission(submission_id):
+
+    try:
+        body = request.get_json(silent=True) or {}
+
+        description = body.get("description")
+        response_url = body.get("response_url")
+
+        if description is None and response_url is None:
+            return jsonify({"msg": "No hay nada que actualizar"}), 400
+
+        student_id = body.get("student_id")
+
+        if student_id is None:
+            return jsonify({"msg": "student_id es obligatorio"}), 400
+
+        user = User.query.get(student_id)
+
+        if not user:
+            return jsonify({"msg": "Usuario no existe"}), 404
+
+        if user.role.lower() != "student":
+            return jsonify({"msg": "Solo un alumno puede modificar una entrega"}), 403
+
+        submission = Submission.query.get(submission_id)
+        if not submission:
+            return jsonify({"msg": "No existe la entrega"}), 404
+
+        if submission.student_id != student_id:
+            return jsonify({"msg": "No autorizado para modificar esta entrega"}), 403
+
+        if description is not None:
+            submission.description = description
+
+        if response_url is not None:
+            submission.response_url = response_url
+
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Entrega actualizada",
+            "submission": {
+                "id": submission.id,
+                "description": submission.description,
+                "response_url": submission.response_url,
+                "todo_id": submission.todo_id,
+                "student_id": submission.student_id
+
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
+
+
+# SUBMISION DELETE TAREA SUBIDA POR UN ESTUDIANTE CON ID
+@app.route("/submission/<int:submission_id>", methods=["DELETE"])
+def delete_submission(submission_id):
+    try:
+        body = request.get_json(silent=True) or {}
+        student_id = body.get("student_id")
+
+        if student_id is None:
+            return jsonify({"msg": "student_id es obligatorio"}), 400
+
+        user = User.query.get(student_id)
+        if not user:
+            return jsonify({"msg": "Usuario no existe"}), 404
+
+        if user.role.lower() != "student":
+            return jsonify({"msg": "Solo un alumno puede eliminar una entrega"}), 403
+
+        submission = Submission.query.get(submission_id)
+        if not submission:
+            return jsonify({"msg": "No existe la entrega"}), 404
+
+        if submission.student_id != student_id:
+            return jsonify({"msg": "No autorizado para Eliminar esta entrega"}), 403
+
+        db.session.delete(submission)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Entrega borrada",
+            "submission": {
+                "id": submission.id,
+                "todo_id": submission.todo_id,
+                "student_id": submission.student_id,
+                "description": submission.description,
+                "response_url": submission.response_url
+
+            }
+
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
+
+# SUBMISION GET TAREA SUBIDA POR UN ESTUDIANTE CON ID
+@app.route("/submission/<int:submission_id>", methods=["GET"])
+def get_submission(submission_id):
+
+    try:
+
+        submission = Submission.query.get(submission_id)
+
+        if not submission:
+            return jsonify({"msg": "No existe la entrega"}), 404
+
+        return jsonify({
+            "msg": "Vista de entrega",
+            "submission": {
+                "id": submission.id,
+                "todo_id": submission.todo_id,
+                "student_id": submission.student_id,
+                "description": submission.description,
+                "response_url": submission.response_url
+
+            }
+
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
+
+
+# SUBMISION GET LISTA DE TAREAS SUBIDA POR ESTUDIANTES
+@app.route("/submissions", methods=["GET"])
+def get_submissions():
+
+    try:
+
+        student_id = request.args.get("student_id")
+        todo_id = request.args.get("todo_id")
+
+        if student_id is None and todo_id is None:
+            return jsonify({"msg": " No existe student_id o todo_id"}), 400
+
+        
+
+        if todo_id is not None:
+            todo = Todo.query.get(todo_id)
+            if todo is None:
+                return jsonify ({"msg" : "La tarea no existe"}), 404
+            
+
+        if student_id is not None:
+            user = User.query.get (student_id)
+            if user is None:
+                return jsonify ({"msg" : "No existe el estudiante"}), 404
+             
+        query = Submission.query
+        if student_id is not None:
+            query = query.filter_by (student_id = student_id)
+
+
+        if todo_id is not None:
+            query = query.filter_by(todo_id=todo_id)
+
+        submissions = query.all()
+        
+        return jsonify({
+            "msg": "Listado de entrega",
+            "submissions": [
+                {
+                    "id": submission.id,
+                    "todo_id": submission.todo_id,
+                    "student_id": submission.student_id,
+                    "description": submission.description,
+                    "response_url": submission.response_url
+
+                } for submission in submissions
+            ]
+
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
+
 @app.route('/register-staff', methods=['POST'])
 def register_staff():
     body = request.get_json(silent=True)
