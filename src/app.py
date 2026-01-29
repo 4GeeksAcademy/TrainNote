@@ -854,3 +854,11 @@ def create_status(status_id):
     db.session.add(new_status)
     db.session.commit()
     return jsonify({"msg": "Calificación creada exitosamente"}), 201
+
+#         API CALENDARIO DE GOOGLE
+@app.route("/google/ping", methods=["GET"])
+def google_ping():
+    return jsonify({ "msg": "Google Calendar listo" }), 200
+
+
+print(">>> Registrando blueprint API")
