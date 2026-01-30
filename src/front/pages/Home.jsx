@@ -1,52 +1,72 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-export const Home = () => {
+import "../styles/home.css";
 
-	const { store, dispatch } = useGlobalReducer()
+import MainHeader from "../components/Header/MainHeader";
+import WeeklyKms from "../components/Home/WeeklyKms";
+import StartRouteButton from "../components/Home/StartRouteButton";
+import FeaturedRoutes from "../components/Home/FeaturedRoutes";
+import FriendsActivity from "../components/Home/FriendsActivity";
+import MaintenanceCard from "../components/Maintenance/MaintenanceCard";
+import Garage from "../components/Profile/Garage";
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
 
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
+import { useFetchWithLoader } from "../hooks/useFetchWithLoader";
 
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
+const Home = () => {
+  const navigate = useNavigate();
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
 
-			return data
+  const fetchWithLoader = useFetchWithLoader();
 
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
 
-	}
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
-	useEffect(() => {
-		loadMessage()
-	}, [])
 
-	return (
-		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
-			</div>
-		</div>
-	);
-}; 
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchWithLoader(
+        `${import.meta.env.VITE_BACKEND_URL}/api/home-data`
+      );
+    };
+
+    loadData();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  return (
+    <div className="home">
+      <div className="home-content">
+        
+
+
+        <main className="home-content">
+          <WeeklyKms />
+          <StartRouteButton className="ui-btn--cta" />
+          <FeaturedRoutes />
+          <div className="ui-panel">
+            <Garage />
+          </div>
+          <FriendsActivity />
+          <MaintenanceCard
+            title="Mantenimiento"
+            showTitle={true}
+            showActionButton={false}
+          />
+         </main>
+      </div>
+    </div>
+  );
+};
+
+export default Home;
