@@ -16,6 +16,7 @@ export const initialStore=()=>{
     user: null,
     role: null,
     isAuthenticated: false,
+    Readings: []
   }
 }
 
@@ -54,6 +55,14 @@ export default function storeReducer(store, action = {}) {
         ...store,
         todos: store.todos.map((todo) => (todo.id === id ? { ...todo, background: color } : todo))
       };
+
+    case "CREATE_READING_SUCCESS":
+  return {
+    ...store,
+    readings: [...store.readings, action.payload],
+    message: "Lectura creada correctamente"
+  };
+
     default:
       throw Error('Unknown action.');
   }    
