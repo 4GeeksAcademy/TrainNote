@@ -26,6 +26,11 @@ export const Navbar = () => {
 						<button className="btn btn-info p-2  ms-2" >Crear Tarea</button>
 					</Link>
 
+					<Link to="/crear-tarea">
+						<button className="btn btn-info p-2  ms-2" >CrearTarea</button>
+					</Link>
+
+
 				</div>
 			</div>
 		</nav>

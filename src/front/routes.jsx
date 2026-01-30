@@ -16,6 +16,7 @@ import { SignupStaff } from "./pages/SignupStaff";
 import { CreateReadings } from "./pages/CreateReadings";
 
 
+
 export const router = createBrowserRouter(
     createRoutesFromElements(
     // CreateRoutesFromElements function allows you to build route elements declaratively.
@@ -36,6 +37,10 @@ export const router = createBrowserRouter(
         <Route path="/crear-tarea" element={<CreateTodoForm />} />
         <Route path="/signup-staff" element={<SignupStaff />} />
         <Route path="/readings-create" element={<CreateReadings />} />
+      
+
+
+
       </Route>
     )
 );
