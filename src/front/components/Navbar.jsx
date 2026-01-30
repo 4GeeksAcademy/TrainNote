@@ -23,7 +23,7 @@ export const Navbar = () => {
 					</Link>
 
 					<Link to="/readings-create">
-						<button className="btn btn-info p-2  ms-2" >Crear Tarea</button>
+						<button className="btn btn-info p-2  ms-2" >Crear Lectura</button>
 					</Link>
 
 				</div>
