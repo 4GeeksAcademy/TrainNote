@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, ForeignKey, Date, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -155,3 +156,12 @@ class Reading(db.Model):
         }
     
 
+class GoogleToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False, unique=True)
+
+    access_token = db.Column(db.String(500), nullable=False)
+    refresh_token = db.Column(db.String(500), nullable=False)
+    token_expiry = db.Column(db.DateTime, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

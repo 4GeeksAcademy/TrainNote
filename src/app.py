@@ -4,7 +4,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
-#from flask_swagger import swagger
+# from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
 from api.models import Students_Group, Group, Todo, Submission, Status, User, Reading
 from api.models import db
@@ -25,8 +25,6 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 
-
-
 def role_required(*roles):
     def wrapper(fn):
         @wraps(fn)
@@ -44,6 +42,10 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret-key")  
+app.config["JWT_TOKEN_LOCATION"] = ["headers"] 
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
+jwt = JWTManager(app)
 app.url_map.strict_slashes = False
 
 CORS(app)
@@ -96,11 +98,14 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # avoid cache memory
     return response
 
+
 @app.route('/prueba', methods=['GET'])
 def prueba():
     users = User.query.all()
     return jsonify([user.serialize() for user in users]), 200
-#MOSTRAR LECTURAS 
+# MOSTRAR LECTURAS
+
+
 @app.route('/readings', methods=['GET'])
 def get_all_readings():
     readings = Reading.query.all()
@@ -109,16 +114,18 @@ def get_all_readings():
         readings_serialized.append(reading.serialize())
     return ({'Tus lecturas pendientes': readings})
 
-#CREAR LECTURAS POR PROFESOR 
+# CREAR LECTURAS POR PROFESOR
+
+
 @app.route('/readings/create', methods=['POST'])
 def create_new_reading():
     body = request.get_json(silent=True)
     if body is None:
-        return jsonify({'msg': 'Necesitas llenar el body'}),400
+        return jsonify({'msg': 'Necesitas llenar el body'}), 400
     if 'title' not in body:
-        return jsonify({'msg': 'Necesitas poner un titulo a la lectura'}),400
+        return jsonify({'msg': 'Necesitas poner un titulo a la lectura'}), 400
     if 'content' not in body:
-        return jsonify({'msg': 'Necesitas agregar contenido'}),400
+        return jsonify({'msg': 'Necesitas agregar contenido'}), 400
     new_reading = Reading()
     new_reading.title = body['title']
     new_reading.content = body['content']
@@ -128,9 +135,8 @@ def create_new_reading():
     return jsonify({'msg': f'lectura {new_reading.title}agregada'})
 
 
-
-#MODIFICAR LECTURA
-@app.route('/editreading/<int:reading_id>', methods=['PUT'])  
+# MODIFICAR LECTURA
+@app.route('/editreading/<int:reading_id>', methods=['PUT'])
 def edit_reading(reading_id):
     reading = Reading.query.get(reading_id)
     if reading is None:
@@ -143,20 +149,21 @@ def edit_reading(reading_id):
         reading.content = body['content']
     db.session.commit()
 
-    return jsonify({'msg': f'Lectura {reading.name} actualizada'}),200
+    return jsonify({'msg': f'Lectura {reading.name} actualizada'}), 200
 
-#ELIMINAR READING 
-        
+# ELIMINAR READING
+
+
 @app.route('/deletereading/<int:reading_id>', methods=['DELETE'])
 def delete_reading(reading_id):
     reading = Reading.query.get(reading_id)
     if reading is None:
         return jsonify({'msg': f'Lectura {reading_id} no encontrada'}), 404
-   
+
     db.session.delete(reading)
     db.session.commit()
 
-    return jsonify(f'Se ha eliminado correctamente la lectura {reading.title} '), 200   
+    return jsonify(f'Se ha eliminado correctamente la lectura {reading.title} '), 200
 
 
 #                  ENDPOINT REGISTER
@@ -313,7 +320,6 @@ def get_group(group_id):
     }), 200
 
 
-
 @app.route("/groups/<int:group_id>/teacher", methods=["POST"])
 @role_required("ADMIN")
 def assign_teacher(group_id):
@@ -432,11 +438,6 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=PORT, debug=True)
 
 
-
-
-
-
-
 # SUBMISION POST SUBE TAREA DE UN ESTUDIANTE CON ID
 @app.route("/submission", methods=["POST"])
 def submission():
@@ -499,6 +500,8 @@ def submission():
         return jsonify({"msg": "Errpr interno del servidor", "error": str(e)}), 500
 
 # SUBMISION PUT EDITA TAREA SUBIDA POR UN ESTUDIANTE CON ID
+
+
 @app.route("/submission/<int:submission_id>", methods=["PUT"])
 def update_submission(submission_id):
 
@@ -601,6 +604,8 @@ def delete_submission(submission_id):
         return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
 
 # SUBMISION GET TAREA SUBIDA POR UN ESTUDIANTE CON ID
+
+
 @app.route("/submission/<int:submission_id>", methods=["GET"])
 def get_submission(submission_id):
 
@@ -641,29 +646,25 @@ def get_submissions():
         if student_id is None and todo_id is None:
             return jsonify({"msg": " No existe student_id o todo_id"}), 400
 
-        
-
         if todo_id is not None:
             todo = Todo.query.get(todo_id)
             if todo is None:
-                return jsonify ({"msg" : "La tarea no existe"}), 404
-            
+                return jsonify({"msg": "La tarea no existe"}), 404
 
         if student_id is not None:
-            user = User.query.get (student_id)
+            user = User.query.get(student_id)
             if user is None:
-                return jsonify ({"msg" : "No existe el estudiante"}), 404
-             
+                return jsonify({"msg": "No existe el estudiante"}), 404
+
         query = Submission.query
         if student_id is not None:
-            query = query.filter_by (student_id = student_id)
-
+            query = query.filter_by(student_id=student_id)
 
         if todo_id is not None:
             query = query.filter_by(todo_id=todo_id)
 
         submissions = query.all()
-        
+
         return jsonify({
             "msg": "Listado de entrega",
             "submissions": [
@@ -682,6 +683,7 @@ def get_submissions():
     except Exception as e:
 
         return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
+
 
 @app.route('/register-staff', methods=['POST'])
 def register_staff():
@@ -856,9 +858,186 @@ def create_status(status_id):
     return jsonify({"msg": "Calificación creada exitosamente"}), 201
 
 #         API CALENDARIO DE GOOGLE
+
+
 @app.route("/google/ping", methods=["GET"])
 def google_ping():
-    return jsonify({ "msg": "Google Calendar listo" }), 200
+    return jsonify({"msg": "Google Calendar listo"}), 200
 
 
-print(">>> Registrando blueprint API")
+@app.route("/google/events", methods=["POST"])
+@role_required("TEACHER", "ADMIN")
+def create_google_event():
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Debe enviar datos para el evento"}), 400
+    if "title" not in body or "due_date" not in body:
+        return jsonify({"msg": "Campos 'title' y 'due_date' son obligatorios"}), 400
+
+    event = {
+        "title": body["title"],
+        "description": body.get("description", ""),
+        "due_date": body["due_date"],
+        "created_by": get_jwt_identity()["user_id"]
+    }
+
+    event["id"] = 1
+
+    return jsonify({"msg": "Evento creado en Google Calendar (simulado)", "event": event}), 201
+
+
+@app.route("/google/events/<int:event_id>/invite", methods=["POST"])
+@role_required("TEACHER", "ADMIN")
+def invite_users_to_event(event_id):
+    body = request.get_json(silent=True)
+    if not body or "emails" not in body:
+        return jsonify({"msg": "Debe enviar una lista de emails para invitar"}), 400
+
+    invited_emails = body["emails"]
+    return jsonify({"msg": f"Invitaciones enviadas a {len(invited_emails)} usuarios", "emails": invited_emails}), 200
+
+
+@app.route("/todos-creation", methods=["POST"])
+@role_required("TEACHER", "ADMIN")
+def create_todo_automatic():
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Debe enviar datos para la tarea"}), 400
+    if "title" not in body or "description" not in body or "due_date" not in body:
+        return jsonify({"msg": "Campos 'title', 'description' y 'due_date' son obligatorios"}), 400
+
+    new_todo = Todo(
+        title=body["title"],
+        description=body["description"],
+        due_date=body["due_date"],
+        teacher_id=get_jwt_identity()["user_id"],
+        group_id=body.get("group_id"),
+        student_id=body.get("student_id")
+    )
+
+    db.session.add(new_todo)
+    db.session.commit()
+
+    return jsonify({"msg": "Tarea automática creada exitosamente", "todo_id": new_todo.id}), 201
+
+#             Crear un evento en el calendario
+
+
+@app.route("/google/create-event", methods=["POST"])
+@jwt_required()
+def google_create_event():
+    from googleapiclient.discovery import build
+    from google.oauth2.credentials import Credentials
+    import datetime
+
+    body = request.get_json(silent=True)
+    if not body or 'summary' not in body or 'start' not in body or 'end' not in body:
+        return jsonify({"msg": "Campos obligatorios: summary, start, end"}), 400
+
+    creds = Credentials(
+        token=os.getenv("GOOGLE_ACCESS_TOKEN"),
+        refresh_token=os.getenv("GOOGLE_REFRESH_TOKEN"),
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        token_uri="https://oauth2.googleapis.com/token"
+    )
+
+    service = build("calendar", "v3", credentials=creds)
+
+    event = {
+        "summary": body["summary"],
+        "description": body.get("description", ""),
+        "start": {"dateTime": body["start"], "timeZone": "UTC"},
+        "end": {"dateTime": body["end"], "timeZone": "UTC"},
+        "attendees": [{"email": e} for e in body.get("attendees", [])],
+    }
+
+    created_event = service.events().insert(
+        calendarId="primary", body=event).execute()
+    return jsonify({"msg": "Evento creado", "event": created_event}), 201
+
+#                Crear un evento en el calendario
+
+
+@app.route("/google/list-events", methods=["GET"])
+@jwt_required()
+def google_list_events():
+    from googleapiclient.discovery import build
+    from google.oauth2.credentials import Credentials
+    import datetime
+
+    creds = Credentials(
+        token=os.getenv("GOOGLE_ACCESS_TOKEN"),
+        refresh_token=os.getenv("GOOGLE_REFRESH_TOKEN"),
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        token_uri="https://oauth2.googleapis.com/token"
+    )
+
+    service = build("calendar", "v3", credentials=creds)
+
+    now = datetime.datetime.utcnow().isoformat() + "Z"
+    events_result = service.events().list(calendarId="primary", timeMin=now,
+                                          maxResults=10, singleEvents=True,
+                                          orderBy='startTime').execute()
+    events = events_result.get('items', [])
+
+    return jsonify({"events": events}), 200
+
+    #              Actualizar un evento existente
+
+
+@app.route("/google/update-event/<event_id>", methods=["PUT"])
+@jwt_required()
+def google_update_event(event_id):
+    from googleapiclient.discovery import build
+    from google.oauth2.credentials import Credentials
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Cuerpo vacío"}), 400
+
+    creds = Credentials(
+        token=os.getenv("GOOGLE_ACCESS_TOKEN"),
+        refresh_token=os.getenv("GOOGLE_REFRESH_TOKEN"),
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        token_uri="https://oauth2.googleapis.com/token"
+    )
+
+    service = build("calendar", "v3", credentials=creds)
+    event = service.events().get(calendarId="primary", eventId=event_id).execute()
+
+    for key in ["summary", "description", "start", "end", "attendees"]:
+        if key in body:
+            if key in ["start", "end"]:
+                event[key] = {"dateTime": body[key], "timeZone": "UTC"}
+            elif key == "attendees":
+                event[key] = [{"email": e} for e in body[key]]
+            else:
+                event[key] = body[key]
+
+    updated_event = service.events().update(
+        calendarId="primary", eventId=event_id, body=event).execute()
+    return jsonify({"msg": "Evento actualizado", "event": updated_event}), 200
+
+#                Eliminar un evento
+
+
+@app.route("/google/delete-event/<event_id>", methods=["DELETE"])
+@jwt_required()
+def google_delete_event(event_id):
+    from googleapiclient.discovery import build
+    from google.oauth2.credentials import Credentials
+
+    creds = Credentials(
+        token=os.getenv("GOOGLE_ACCESS_TOKEN"),
+        refresh_token=os.getenv("GOOGLE_REFRESH_TOKEN"),
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        token_uri="https://oauth2.googleapis.com/token"
+    )
+
+    service = build("calendar", "v3", credentials=creds)
+    service.events().delete(calendarId="primary", eventId=event_id).execute()
+    return jsonify({"msg": "Evento eliminado"}), 200
