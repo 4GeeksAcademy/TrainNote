@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for, send_from_directory
+from flask import Flask, request, jsonify, url_for, send_from_directory, session
 from flask_migrate import Migrate
 # from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
@@ -12,10 +12,14 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required, get_jwt
 from functools import wraps
 from flask_cors import CORS
 from dotenv import load_dotenv
+from datetime import datetime
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow, InstalledAppFlow
+from googleapiclient.discovery import build
 import os
 # from models import Person
 
@@ -23,6 +27,8 @@ load_dotenv()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_CLIENT_SECRETS_FILE = "google_credentials/client_secret.json"
+SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 
 
 def role_required(*roles):
@@ -30,20 +36,42 @@ def role_required(*roles):
         @wraps(fn)
         @jwt_required()
         def decorated(*args, **kwargs):
-            identity = get_jwt_identity()
-            if identity["role"] not in roles:
+            claims = get_jwt()
+            if claims.get("role") not in roles:
                 return jsonify({"msg": "Acceso no autorizado"}), 403
             return fn(*args, **kwargs)
         return decorated
     return wrapper
 
 
+def get_calendar_service():
+    creds = None
+    token_path = "google_credentials/token.json"
+
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
+    if not creds or not creds.valid:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            "google_credentials/client_secret.json",
+            SCOPES
+        )
+        creds = flow.run_local_server(port=0)
+
+        with open(token_path, "w") as token:
+            token.write(creds.to_json())
+
+    service = build("calendar", "v3", credentials=creds)
+    return service
+
+
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret-key")  
-app.config["JWT_TOKEN_LOCATION"] = ["headers"] 
+app.secret_key = "super-secret-key"
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
+app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 jwt = JWTManager(app)
 app.url_map.strict_slashes = False
@@ -223,34 +251,21 @@ def login():
         if 'email' not in body or 'password' not in body:
             return jsonify({'msg': 'Email y password son obligatorios'}), 400
 
-        user = None
-        role = None
-
-        users_models = [
-            ('Student', "STUDENT"),
-            ('Teacher', "TEACHER"),
-            ('Admin', "ADMIN")
-        ]
-
-        for model, r in users_models:
-            user = model.query.filter_by(email=body['email']).first()
-            if user:
-                role = r
-                break
+        user = User.query.filter_by(email=body['email']).first()
 
         if not user or user.password != body['password']:
             return jsonify({'msg': 'Credenciales incorrectas'}), 401
 
         access_token = create_access_token(
-            identity={
-                "user_id": user.id,
-                "role": role
+            identity=str(user.id),
+            additional_claims={
+                "role": user.role
             }
         )
 
         return jsonify({
             "access_token": access_token,
-            "role": role
+            "role": user.role
         }), 200
 
     except Exception as e:
@@ -873,17 +888,27 @@ def create_google_event():
         return jsonify({"msg": "Debe enviar datos para el evento"}), 400
     if "title" not in body or "due_date" not in body:
         return jsonify({"msg": "Campos 'title' y 'due_date' son obligatorios"}), 400
-
+    service = get_calendar_service()
     event = {
-        "title": body["title"],
+        "summary": body["title"],
         "description": body.get("description", ""),
-        "due_date": body["due_date"],
-        "created_by": get_jwt_identity()["user_id"]
+        "start": {
+            "dateTime": body["due_date"],
+            "timeZone": "America/Montevideo"
+        },
+        "end": {
+            "dateTime": body["due_date"],
+            "timeZone": "America/Montevideo"
+        }
     }
-
-    event["id"] = 1
-
-    return jsonify({"msg": "Evento creado en Google Calendar (simulado)", "event": event}), 201
+    created_event = service.events().insert(
+        calendarId="primary",
+        body=event
+    ).execute()
+    return jsonify({
+        "msg": "Evento creado en Google Calendar",
+        "google_event_id": created_event["id"]
+    }), 201
 
 
 @app.route("/google/events/<int:event_id>/invite", methods=["POST"])
@@ -1041,3 +1066,46 @@ def google_delete_event(event_id):
     service = build("calendar", "v3", credentials=creds)
     service.events().delete(calendarId="primary", eventId=event_id).execute()
     return jsonify({"msg": "Evento eliminado"}), 200
+
+#                Login de google
+
+
+@app.route("/google/login")
+@jwt_required()
+def google_login():
+    flow = Flow.from_client_secrets_file(
+        GOOGLE_CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        redirect_uri="http://localhost:3001/google/callback"
+    )
+
+    authorization_url, state = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent"
+    )
+
+    session["state"] = state
+    return jsonify({"auth_url": authorization_url})
+
+#                callback google
+
+
+@app.route("/google/callback")
+def google_callback():
+    state = session.get("state")
+
+    flow = Flow.from_client_secrets_file(
+        GOOGLE_CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        state=state,
+        redirect_uri="http://localhost:3001/google/callback"
+    )
+
+    flow.fetch_token(authorization_response=request.url)
+
+    credentials = flow.credentials
+
+    service = build("calendar", "v3", credentials=credentials)
+
+    return jsonify({"msg": "Google Calendar conectado correctamente"})
