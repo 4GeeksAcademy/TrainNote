@@ -1,4 +1,7 @@
-from flask import jsonify, url_for
+import os
+from functools import wraps
+from flask import jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 class APIException(Exception):
     status_code = 400
@@ -15,18 +18,18 @@ class APIException(Exception):
         rv['message'] = self.message
         return rv
 
+
 def has_no_empty_params(rule):
     defaults = rule.defaults if rule.defaults is not None else ()
     arguments = rule.arguments if rule.arguments is not None else ()
     return len(defaults) >= len(arguments)
 
+
 def generate_sitemap(app):
     links = ['/admin/']
     for rule in app.url_map.iter_rules():
-        # Filter out rules we can't navigate to in a browser
-        # and rules that require parameters
         if "GET" in rule.methods and has_no_empty_params(rule):
-            url = url_for(rule.endpoint, **(rule.defaults or {}))
+            url = app.url_for(rule.endpoint, **(rule.defaults or {}))
             if "/admin/" not in url:
                 links.append(url)
 
@@ -38,4 +41,21 @@ def generate_sitemap(app):
         <p>API HOST: <script>document.write('<input style="padding: 5px; width: 300px" type="text" value="'+window.location.href+'" />');</script></p>
         <p>Start working on your project by following the <a href="https://start.4geeksacademy.com/starters/full-stack" target="_blank">Quick Start</a></p>
         <p>Remember to specify a real endpoint path like: </p>
-        <ul style="text-align: left;">"""+links_html+"</ul></div>"
+        <ul style="text-align: left;">"""+links_html+"</ul></div>"""
+
+def role_required(*roles):
+    """
+    Decorador para proteger rutas según rol.
+    Ejemplo: @role_required('ADMIN', 'TEACHER')
+    """
+    def wrapper(fn):
+        @wraps(fn)
+        @jwt_required()
+        def decorated(*args, **kwargs):
+            identity = get_jwt_identity()
+            user_role = identity.get("role")
+            if user_role not in roles:
+                return jsonify({"msg": "Acceso no autorizado"}), 403
+            return fn(*args, **kwargs)
+        return decorated
+    return wrapper
