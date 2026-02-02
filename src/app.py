@@ -157,10 +157,16 @@ def create_new_reading():
     if 'title' not in body:
         return jsonify({'msg': 'Necesitas poner un titulo a la lectura'}), 400
     if 'content' not in body:
-        return jsonify({'msg': 'Necesitas agregar contenido'}), 400
+        return jsonify({'msg': 'Necesitas agregar contenido'}),400
+    if 'teacher_id' not in body:
+        return jsonify({'msg': 'Necesitas agregar teacher_id'}),400
+    if 'group_id' not in body:
+        return jsonify({'msg': 'Necesitas agregar group_id'}),400
     new_reading = Reading()
     new_reading.title = body['title']
     new_reading.content = body['content']
+    new_reading.teacher_id = body['teacher_id']
+    new_reading.group_id = body['group_id']
     db.session.add(new_reading)
     db.session.commit()
 
