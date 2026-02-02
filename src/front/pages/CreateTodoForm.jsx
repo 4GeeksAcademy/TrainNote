@@ -2,21 +2,23 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 
-
-
-
-
 export const CreateTodoForm = () => {
 
 
 
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [groupId, setGroupId] = useState("");
+  const [teacher, setTeacher] = useState("");
   const [description, setDescription] = useState("");
 
+  const [group, setGroup] = useState("");
   const [groups, setGroups] = useState([]);
+
   const [error, setError] = useState(null);
+const [successMsg, setSuccessMsg] = useState(null);
+
+
+
 
   useEffect(() => {
     const loadGroups = async () => {
@@ -26,16 +28,27 @@ export const CreateTodoForm = () => {
 
 
         const backend = import.meta.env.VITE_BACKEND_URL;
-        const resp = await fetch(`${backend}/groups`);
+        const token = localStorage.getItem("token");
+
+        if (!token) throw new Error("No hay token");
+
+        const resp = await fetch(`${backend}/groups`, {
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+
+        });
+
 
         const data = await resp.json();
         if (!resp.ok) throw new Error(data?.msg || "Error cargando groups");
 
-        setGroups(data.groups ?? data);
+        setGroups(Array.isArray(data) ? data : (data.groups ?? []));
 
-      }
-      catch (e) {
+      } catch (e) {
         setError(e.message);
+        setGroups([]);
       }
     };
     loadGroups();
@@ -45,8 +58,8 @@ export const CreateTodoForm = () => {
   const handleSubmit = async (e) => {
 
     e.preventDefault();
-    if (!title || !dueDate || !groupId) {
-      setError("Título, fecha y grupo son obligatorios");
+    if (!title || !dueDate || !description) {
+      setError("Título, fecha y descripción son obligatorios");
       return;
     }
 
@@ -58,31 +71,44 @@ export const CreateTodoForm = () => {
 
       const payload = {
         title,
+        description,
         due_date: dueDate,
-        group_id: Number(groupId),
-        description
+        group_id: Number(group),
       };
 
 
-      const resp = await fetch(`${backend}/todo`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const token = localStorage.getItem("token")
 
-        },
+      const headers = {
+
+        "Content-Type" : "application/json",
+
+
+      };
+
+      if (token) headers.Authorization =  ` Bearn ${token} `; 
+
+      const resp = await fetch(`${backend}/todos-creation`, {
+        method: "POST",
+        headers,
         body: JSON.stringify(payload),
       });
+
       const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) throw new Error(data?.msg || "Error creando tarea");
+      if (!resp.ok) throw new Error(data?.msg || `Error creando tarea (${resp.status})`);
 
       setTitle("");
       setDueDate("");
-      setGroupId("");
+      setGroup("");
       setDescription("");
+
+      
+      setSuccessMsg("Tarea creada correctamente ✅");
 
     } catch (e) {
 
       setError(e.message);
+      setSuccessMsg(null);
     }
 
   }
@@ -133,9 +159,20 @@ export const CreateTodoForm = () => {
                   </div>
 
 
+                  <div className="mb-5 ">
+                    <label htmlFor="group" className="form-label ">group id</label>
+                    <input type="text" className="form-control " id="exampleInput" value={group} onChange={(e) => setGroup(e.target.value)} />
+                  </div>
+
+                  <div className="mb-5 ">
+                    <label htmlFor="teacher" className="form-label ">teacher id</label>
+                    <input type="text" className="form-control " id="exampleInput" value={teacher} onChange={(e) => setTeacher(e.target.value)} />
+                  </div>
+
+{/*
                   <div className="mb-5">
                     <label htmlFor="grupo" className="form-label">Grupos:</label>
-                    <select className="form-select" aria-label="Default select example" value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+                    <select className="form-select" aria-label="Default select example" value={group} onChange={(e) => setGroup(e.target.value)}>
                       <option value="">Seleccionar el grupo</option>
 
                       {groups.map((g) => (
@@ -144,13 +181,12 @@ export const CreateTodoForm = () => {
                         </option>
 
 
-
-
                       ))}
 
                     </select>
+                    
                   </div>
-
+*/}
                   <div className="mb-3">
                     <label htmlFor="exampleFormControlTextarea1" className="form-label">Agregar descripción de tarea</label>
                     <textarea className="form-control" id="exampleFormControlTextarea1" rows="3" value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -159,17 +195,17 @@ export const CreateTodoForm = () => {
 
 
 
-                  <div class="mb-3">
+                  <div className="mb-3">
                     <label htmlFor="formFile" className="form-label">Default file input example</label>
                     <input className="form-control" type="file" id="formFile" />
                   </div>
 
-
+                  <button type="submit" className="btn text-white mt-3 " style={{ backgroundColor: "#49BBBD" }}> Subir </button>
 
                 </fieldset>
               </form>
 
-              <button type="submit" className="btn text-white mt-3 " style={{ backgroundColor: "#49BBBD" }}> Subir </button>
+
 
 
 
