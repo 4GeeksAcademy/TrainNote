@@ -1294,7 +1294,8 @@ def create_todo_with_google_event():
             }), 400
 
         try:
-            dt_start = datetime.fromisoformat(due_date_str.replace("Z", "+00:00"))
+            dt_start = datetime.fromisoformat(
+                due_date_str.replace("Z", "+00:00"))
         except Exception:
             return jsonify({"msg": "due_date debe ser ISO. Ej: 2026-02-10T23:59:00"}), 400
 
@@ -1308,7 +1309,8 @@ def create_todo_with_google_event():
                 "msg": f"No existe un grupo con group_id={group_id}"
             }), 400
 
-        students_rel = list(group.students) if hasattr(group, "students") else []
+        students_rel = list(group.students) if hasattr(
+            group, "students") else []
         if not students_rel:
             return jsonify({
                 "msg": f"El grupo {group_id} no tiene estudiantes. Agregá alumnos antes."
@@ -1348,7 +1350,7 @@ def create_todo_with_google_event():
         created_event = service.events().insert(
             calendarId="primary",
             body=google_event_body,
-            sendUpdates="all"  
+            sendUpdates="all"
         ).execute()
 
         created_todos = []
@@ -1382,6 +1384,7 @@ def create_todo_with_google_event():
             "msg": "Error guardando la tarea en DB",
             "error": str(e)
         }), 500
+
 
 @app.route("/google/events/<event_id>", methods=["GET"])
 @role_required("TEACHER", "ADMIN")
