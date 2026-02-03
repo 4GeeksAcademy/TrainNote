@@ -10,12 +10,12 @@ export const CreateTodoForm = () => {
   const [dueDate, setDueDate] = useState("");
   const [teacher, setTeacher] = useState("");
   const [description, setDescription] = useState("");
-
+  const [student, setStudent] = useState("");
   const [group, setGroup] = useState("");
   const [groups, setGroups] = useState([]);
 
   const [error, setError] = useState(null);
-const [successMsg, setSuccessMsg] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
 
 
 
@@ -49,6 +49,7 @@ const [successMsg, setSuccessMsg] = useState(null);
       } catch (e) {
         setError(e.message);
         setGroups([]);
+        setStudent("");
       }
     };
     loadGroups();
@@ -60,12 +61,14 @@ const [successMsg, setSuccessMsg] = useState(null);
     e.preventDefault();
     if (!title || !dueDate || !description) {
       setError("Título, fecha y descripción son obligatorios");
+      setSuccessMsg(null);
       return;
     }
 
     try {
 
       setError(null);
+      setSuccessMsg(null);
 
       const backend = import.meta.env.VITE_BACKEND_URL;
 
@@ -74,6 +77,9 @@ const [successMsg, setSuccessMsg] = useState(null);
         description,
         due_date: dueDate,
         group_id: Number(group),
+        teacher_id: Number(teacher),
+        student_id: Number(student),
+
       };
 
 
@@ -81,12 +87,12 @@ const [successMsg, setSuccessMsg] = useState(null);
 
       const headers = {
 
-        "Content-Type" : "application/json",
+        "Content-Type": "application/json",
 
 
       };
 
-      if (token) headers.Authorization =  ` Bearn ${token} `; 
+      if (token) headers.Authorization = `Bearer ${token}`;
 
       const resp = await fetch(`${backend}/todos-creation`, {
         method: "POST",
@@ -101,14 +107,20 @@ const [successMsg, setSuccessMsg] = useState(null);
       setDueDate("");
       setGroup("");
       setDescription("");
+      setStudent("");
 
-      
+
       setSuccessMsg("Tarea creada correctamente ✅");
 
     } catch (e) {
 
+
+
+
       setError(e.message);
       setSuccessMsg(null);
+
+
     }
 
   }
@@ -116,14 +128,19 @@ const [successMsg, setSuccessMsg] = useState(null);
 
   return (
 
+
+
+
+
+
     <div className="container text-center">
-      <div className="row">
-        <div className="col-3 vh-100 text-start" style={{ backgroundColor: "#e9e9e9" }}>
+      <div className="row  align-items-stretch">
+        <div className="col-3  text-start" style={{ backgroundColor: "#e9e9e9" }}>
 
           <h5 className=" text-black p-4 text-start">  Bienvenido </h5>
         </div>
 
-        <div className="col-9 vh-100 d-flex flex-column p-0  "  >
+        <div className="col-9  d-flex flex-column p-0  "  >
 
           <div className=" text-white p-4 text-start" style={{ backgroundColor: "#49BBBD" }}>
 
@@ -145,7 +162,23 @@ const [successMsg, setSuccessMsg] = useState(null);
                   un archivo, hacé clic en el botón Archivo y agregalo a la descripción de la consigna.</p>
               </div>
 
-              <form className="text-start bg-body rounded-4 p-4  " onSubmit={handleSubmit}>
+
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+
+
+              )}
+
+              {successMsg && (
+                <div className="alert alert-success" role="alert">
+
+                  {successMsg}
+                </div>
+
+              )}
+              <form className="text-start bg-body rounded-4 p-4 mb-5 " onSubmit={handleSubmit}>
                 <fieldset>
 
                   <div className="mb-5 ">
@@ -165,11 +198,16 @@ const [successMsg, setSuccessMsg] = useState(null);
                   </div>
 
                   <div className="mb-5 ">
+                    <label htmlFor="student" className="form-label ">student id</label>
+                    <input type="text" className="form-control " id="exampleInput" value={student} onChange={(e) => setStudent(e.target.value)} />
+                  </div>
+
+                  <div className="mb-5 ">
                     <label htmlFor="teacher" className="form-label ">teacher id</label>
                     <input type="text" className="form-control " id="exampleInput" value={teacher} onChange={(e) => setTeacher(e.target.value)} />
                   </div>
 
-{/*
+
                   <div className="mb-5">
                     <label htmlFor="grupo" className="form-label">Grupos:</label>
                     <select className="form-select" aria-label="Default select example" value={group} onChange={(e) => setGroup(e.target.value)}>
@@ -184,9 +222,9 @@ const [successMsg, setSuccessMsg] = useState(null);
                       ))}
 
                     </select>
-                    
+
                   </div>
-*/}
+
                   <div className="mb-3">
                     <label htmlFor="exampleFormControlTextarea1" className="form-label">Agregar descripción de tarea</label>
                     <textarea className="form-control" id="exampleFormControlTextarea1" rows="3" value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -199,9 +237,9 @@ const [successMsg, setSuccessMsg] = useState(null);
                     <label htmlFor="formFile" className="form-label">Default file input example</label>
                     <input className="form-control" type="file" id="formFile" />
                   </div>
-
-                  <button type="submit" className="btn text-white mt-3 " style={{ backgroundColor: "#49BBBD" }}> Subir </button>
-
+                  <div className="text-end">
+                    <button type="submit" className="btn text-white mt-3 " style={{ backgroundColor: "#49BBBD" }}> Subir </button>
+                  </div>
                 </fieldset>
               </form>
 
