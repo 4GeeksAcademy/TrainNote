@@ -2,14 +2,14 @@
   background-color: #5B72EE;
 }
 
-.min-vh-75 {
-  min-height: 75vh;
-}
-
 .hero-image {
-  max-height: 520px;
+  max-height: 600px;
 }
 
 .g-color {
   color: #5B72EE;
+}
+
+.v-color{
+  color: #00CBB8;
 }
