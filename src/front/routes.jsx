@@ -15,6 +15,10 @@ import { CreateTodoForm } from "./pages/CreateTodoForm";
 import { SignupStaff } from "./pages/SignupStaff";
 import { CreateReadings } from "./pages/CreateReadings";
 import { HomeStudent } from "./pages/homeStudent";
+import { ReadingsViewStudents } from "./pages/ReadingsViewStudents.jsx";
+import { IndividualReadingViewStudent } from "./pages/IndividualReadingViewStudent.jsx";
+
+
 
 
 
@@ -39,6 +43,15 @@ export const router = createBrowserRouter(
         <Route path="/signup-staff" element={<SignupStaff />} />
         <Route path="/readings-create" element={<CreateReadings />} />
         <Route path="/homeStudent" element={<HomeStudent />} />
+        <Route path="/readings/student" element={<ReadingsViewStudents />} />
+        <Route path="/reading/:id" element={<IndividualReadingViewStudent />} />
+        <Route path="/readings" element={<ReadingsViewStudents />} />
+
+        
+
+
+
+
       
 
 

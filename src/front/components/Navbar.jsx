@@ -50,13 +50,10 @@ export const Navbar = () => {
 								</button>
 							</Link>
 
-							<Link to="/crear-tarea">
-								<button className="btn btn-info ms-2">
-									Crear Tarea
-								</button>
-							</Link>
-						</>
-					)}
+					<Link to="/readings/student">
+						<button className="btn btn-info p-2  ms-2" >Ver Lecturas</button>
+					</Link>
+
 
 					{isAuthenticated && role === "ADMIN" && (
 						<Link to="/SignupStaff">

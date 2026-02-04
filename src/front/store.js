@@ -77,7 +77,20 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
     todos: action.payload
+case "GET_READINGS_SUCCESS":
+  return {
+    ...store,
+    readings: action.payload
   };
+
+  case "REGISTER_STUDENTS_SUCCESS":
+  return {
+    ...store,
+    students: [...store.students, action.payload],
+    message: "Alumno registrado correctamente"
+  };
+
+  
 
     default:
       throw Error("Unknown action.");
