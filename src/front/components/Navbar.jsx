@@ -37,6 +37,10 @@ export const Navbar = () => {
 						<button className="btn btn-info p-2  ms-2" >CrearTarea</button>
 					</Link>
 
+					<Link to="/readings/student">
+						<button className="btn btn-info p-2  ms-2" >Ver Lecturas</button>
+					</Link>
+
 
 				</div>
 

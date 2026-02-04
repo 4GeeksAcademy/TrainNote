@@ -151,8 +151,8 @@ class Reading(db.Model):
             "id": self.id,
             "title": self.title,
             "content": self.content,
-            "La asigno el profesor": self.teacher,
-            "Grupo asignado": self.group
+            "La asigno el profesor": self.teacher_id,
+            "Grupo asignado": self.group_id
         }
     
 

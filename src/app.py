@@ -20,8 +20,8 @@ from flask_migrate import Migrate
 from flask import Flask, request, jsonify, url_for, send_from_directory, session, redirect
 import os
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-# from flask_swagger import swagger
-# from models import Person
+from flask_swagger import swagger
+from models import Person
 
 load_dotenv()
 
@@ -144,7 +144,15 @@ def get_all_readings():
     readings_serialized = []
     for reading in readings:
         readings_serialized.append(reading.serialize())
-    return ({'Tus lecturas pendientes': readings})
+    return jsonify(readings_serialized)
+
+#MOSTRAR LECTURA POR ID
+
+@app.route('/reading/<int:reading_id>', methods=['GET'])
+def get_reading(reading_id):
+    reading = Reading.query.get(reading_id)
+    reading_serialized = reading.serialize()
+    return jsonify(reading_serialized),200
 
 # CREAR LECTURAS POR PROFESOR
 

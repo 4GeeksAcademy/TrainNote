@@ -16,7 +16,7 @@ export const initialStore=()=>{
     user: null,
     role: null,
     isAuthenticated: false,
-    Readings: [],
+    readings: [],
     Students :[]
   }
 }
@@ -64,12 +64,20 @@ export default function storeReducer(store, action = {}) {
     message: "Lectura creada correctamente"
   };
 
+case "GET_READINGS_SUCCESS":
+  return {
+    ...store,
+    readings: action.payload
+  };
+
   case "REGISTER_STUDENTS_SUCCESS":
   return {
     ...store,
     students: [...store.students, action.payload],
     message: "Alumno registrado correctamente"
   };
+
+  
 
     default:
       throw Error('Unknown action.');
