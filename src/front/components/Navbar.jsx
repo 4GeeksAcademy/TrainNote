@@ -49,9 +49,9 @@ export const Navbar = () => {
 							</button>
 						</Link>
 
-						<Link to="/readings/student">
+						<Link to="/crear-tarea">
 							<button className="btn btn-info p-2 ms-2">
-								Ver Lecturas
+								Crear tarea
 							</button>
 						</Link>
 					</>
@@ -66,11 +66,21 @@ export const Navbar = () => {
 				)}
 
 				{isAuthenticated && role === "STUDENT" && (
+					<>
 					<Link to="/mis-tareas">
 						<button className="btn btn-success ms-2">
 							Mis tareas
 						</button>
 					</Link>
+
+					<Link to="/readings/student">
+						<button className="btn btn-success ms-2">
+							Mis lecturas 
+						</button>
+					</Link>
+
+					
+</>
 				)}
 
 				{isAuthenticated && (
