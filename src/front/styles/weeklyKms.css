@@ -1,0 +1,133 @@
+/* ===============================
+   WEEKLY KMS CARD
+================================ */
+
+/* ---------- CONTENEDOR ---------- */
+
+.weekly-kms {
+  background: var(--panel-bg);
+  border-radius: 20px;
+  padding: 20px;
+  color: #fff;
+}
+
+/* ---------- GRID ---------- */
+
+.weekly-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+/* ---------- TOP ---------- */
+
+.weekly-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.weekly-label {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.weekly-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.weekly-value span {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.weekly-diff {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.weekly-diff.positive {
+  color: var(--yellow-1);
+}
+
+/* ---------- CHART ---------- */
+
+.weekly-chart {
+  width: 100%;
+  margin: 24px 0;
+}
+
+.weekly-bars {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+}
+
+/* Base de las barras */
+
+.weekly-bar {
+  width: clamp(10px, 2.5vw, 28px);
+  height: 26px;
+  background: var(--chart-bar-muted);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  opacity: 0.35;
+}
+
+/* Barra activa */
+
+.weekly-bar.active {
+  width: clamp(48px, 8vw, 140px);
+  height: 42px;
+  background: var(--chart-bar-active);
+  box-shadow: inset 0 2px 0 var(--chart-bar-highlight);
+  opacity: 1;
+}
+
+/* ---------- DIVIDER ---------- */
+
+.weekly-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+}
+
+/* ---------- BOTTOM ---------- */
+
+.weekly-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.weekly-extra {
+  font-size: 0.9rem;
+}
+
+.weekly-record {
+  text-align: right;
+}
+
+.weekly-sub {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* ---------- DESKTOP ---------- */
+
+@media (min-width: 768px) {
+  .weekly-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+  }
+
+  .weekly-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+}

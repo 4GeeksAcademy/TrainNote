@@ -80,3 +80,9 @@ database.database
 database.db
 diagram.png
 __pycache__/
+.env
+
+# Local database (Flask / SQLite)
+src/instance/
+instance/
+*.db
