@@ -21,7 +21,6 @@ from flask import Flask, request, jsonify, url_for, send_from_directory, session
 import os
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 from flask_swagger import swagger
-from models import Person
 
 load_dotenv()
 

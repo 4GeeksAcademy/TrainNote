@@ -10,8 +10,8 @@ export const initialStore = () => {
     user: null,
     role: role ? role : null,
     isAuthenticated: !!token,
-    Readings: [],
-    Students: [],
+    readings: [],
+    students: [],
   };
 };
 
@@ -24,6 +24,15 @@ export default function storeReducer(store, action = {}) {
         role: action.payload.role,
         isAuthenticated: true,
         message: "Staff registrado correctamente",
+      };
+
+    case "LOGIN_SUCCESS":
+      return {
+        ...store,
+        user: action.payload.user,
+        role: action.payload.role,
+        isAuthenticated: true,
+        message: "Inicio de sesión exitoso",
       };
 
     case "LOGOUT":
@@ -40,13 +49,18 @@ export default function storeReducer(store, action = {}) {
         message: action.payload,
       };
 
+    case "SET_TODOS":
+      return {
+        ...store,
+        todos: action.payload,
+      };
+
     case "add_task":
       const { id, color } = action.payload;
-
       return {
         ...store,
         todos: store.todos.map((todo) =>
-          todo.id === id ? { ...todo, background: color } : todo,
+          todo.id === id ? { ...todo, background: color } : todo
         ),
       };
 
@@ -57,40 +71,18 @@ export default function storeReducer(store, action = {}) {
         message: "Lectura creada correctamente",
       };
 
+    case "GET_READINGS_SUCCESS":
+      return {
+        ...store,
+        readings: action.payload,
+      };
+
     case "REGISTER_STUDENTS_SUCCESS":
       return {
         ...store,
         students: [...store.students, action.payload],
         message: "Alumno registrado correctamente",
       };
-
-    case "LOGIN_SUCCESS":
-      return {
-        ...store,
-        user: action.payload.user,
-        role: action.payload.role,
-        isAuthenticated: true,
-        message: "Inicio de sesión exitoso",
-      };
-
-    case "SET_TODOS":
-      return {
-        ...store,
-    todos: action.payload
-case "GET_READINGS_SUCCESS":
-  return {
-    ...store,
-    readings: action.payload
-  };
-
-  case "REGISTER_STUDENTS_SUCCESS":
-  return {
-    ...store,
-    students: [...store.students, action.payload],
-    message: "Alumno registrado correctamente"
-  };
-
-  
 
     default:
       throw Error("Unknown action.");
