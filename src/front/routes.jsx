@@ -14,6 +14,7 @@ import { Login } from "./pages/Login";
 import { CreateTodoForm } from "./pages/CreateTodoForm";
 import { SignupStaff } from "./pages/SignupStaff";
 import { CreateReadings } from "./pages/CreateReadings";
+import { HomeStudent } from "./pages/homeStudent";
 
 
 
@@ -37,6 +38,7 @@ export const router = createBrowserRouter(
         <Route path="/crear-tarea" element={<CreateTodoForm />} />
         <Route path="/signup-staff" element={<SignupStaff />} />
         <Route path="/readings-create" element={<CreateReadings />} />
+        <Route path="/homeStudent" element={<HomeStudent />} />
       
 
 
