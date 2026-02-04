@@ -766,10 +766,20 @@ def create_todo():
         return jsonify({"msg": "El campo description no puede estar vacío"}), 400
     if 'due_date' not in body:
         return jsonify({"msg": "El campo due_date no puede estar vacío"}), 400
+    if 'teacher_id' not in body:
+        return jsonify({"msg": "El campo teacher_id no puede estar vacío"}), 400
+    if 'group_id' not in body:
+        return jsonify({"msg": "El campo group_id no puede estar vacío"}), 400
+    if 'student_id' not in body:
+        return jsonify({"msg": "El campo student_id no puede estar vacío"}), 400
     new_todo = Todo(
         title=body['title'],
         description=body['description'],
         due_date=body['due_date'],
+        teacher_id=body['teacher_id'],
+        group_id=body['group_id'],
+        student_id=body['student_id']
+       
     )
     db.session.add(new_todo)
     db.session.commit()
