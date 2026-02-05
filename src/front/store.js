@@ -64,6 +64,14 @@ export default function storeReducer(store, action = {}) {
         ),
       };
 
+
+
+    case "GET_TODOS_SUCCESS":
+      return {
+        ...store,
+        todos: action.payload,
+      };
+
     case "CREATE_READING_SUCCESS":
       return {
         ...store,
