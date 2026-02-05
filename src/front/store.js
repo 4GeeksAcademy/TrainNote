@@ -17,7 +17,7 @@ export const initialStore = () => {
 
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
-    case "REGISTER_STAFF_SUCCESS":
+    case "REGISTER_STAFF_SUCCESS":  
       return {
         ...store,
         user: action.payload.user,

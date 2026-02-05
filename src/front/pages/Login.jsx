@@ -32,6 +32,11 @@ export const Login = () => {
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("role", data.role);
 
+            console.log("GUARDADO:", {
+                token: localStorage.getItem("token"),
+                role: localStorage.getItem("role"),
+            });
+
             dispatch({
                 type: "LOGIN_SUCCESS",
                 payload: {
