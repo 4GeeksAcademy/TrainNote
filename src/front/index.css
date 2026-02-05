@@ -1,4 +1,4 @@
-.hero-section {
+.g-color-bg {
   background-color: #5B72EE;
 }
 
@@ -14,6 +14,13 @@
   color: #00CBB8;
 }
 
-.todo-card {
-	min-width: 320px;
+.card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 6; 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hero-home{
+  background-color: #9DCCFF;
 }
