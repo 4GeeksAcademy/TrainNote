@@ -1,39 +1,37 @@
-import React from "react";
-import { useState, useEffect } from "react";
-import { Route } from "react-router-dom";
+import React, { useEffect } from "react";
 import { TodoCard } from "../components/todoCard";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const HomeStudent = () => {
+	const { store, dispatch } = useGlobalReducer();
+	const todos = store.todos || [];
 
-    const { store, dispatch } = useGlobalReducer();
-    const { todos } = store;
+	useEffect(() => {
+		const fetchTodos = async () => {
+			try {
+				const backend = import.meta.env.VITE_BACKEND_URL;
+				const resp = await fetch(`${backend}/todos`, {
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem("token")}`,
+					},
+				});
 
-    useEffect(() => {
-        const fetchTodos = async () => {
-            try {
-                const backend = import.meta.env.VITE_BACKEND_URL;
-                const resp = await fetch(`${backend}/todos`, {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
-                });
+				const data = await resp.json();
 
-                const data = await resp.json();
+				dispatch({
+					type: "SET_TODOS",
+					payload: data,
+				});
+			} catch (error) {
+				console.error("Error fetching tasks:", error);
+			}
+		};
 
-                dispatch({
-                    type: "SET_TODOS",
-                    payload: data
-                });
-            } catch (error) {
-                console.error("Error fetching tasks:", error);
-            }
-        };
+		fetchTodos();
+	}, [dispatch]);
 
-        fetchTodos();
-    }, []);
-       return (
+	return (
 		<div className="bg-light pb-5">
 			{/* HERO */}
 			<div className="hero-section text-white">
@@ -64,21 +62,13 @@ export const HomeStudent = () => {
 			<div className="container mt-5">
 				<h2 className="fw-bold mb-4">Mis Tareas</h2>
 
-				<div className="row">
-					{todos.length === 0 && (
-						<p>No hay tareas asignadas</p>
-					)}
+				{todos.length === 0 && (
+					<p>No hay tareas asignadas</p>
+				)}
 
-					{todos.map((todo) => (
-						<div className="col-md-4 mb-4" key={todo.id}>
-							<TodoCard
-								todo={{
-									title: todo.title,
-									description: todo.description,
-									background: "#e3f2fd",
-								}}
-							/>
-						</div>
+				<div className="d-flex gap-3 overflow-auto px-3 pb-3">
+					{todos.map(todo => (
+						<TodoCard key={todo.id} todo={todo} />
 					))}
 				</div>
 			</div>

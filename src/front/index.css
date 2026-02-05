@@ -13,3 +13,7 @@
 .v-color{
   color: #00CBB8;
 }
+
+.todo-card {
+	min-width: 320px;
+}
