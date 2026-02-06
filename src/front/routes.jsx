@@ -17,6 +17,7 @@ import { CreateReadings } from "./pages/CreateReadings";
 import { HomeStudent } from "./pages/homeStudent";
 import { ReadingsViewStudents } from "./pages/ReadingsViewStudents.jsx";
 import { IndividualReadingViewStudent } from "./pages/IndividualReadingViewStudent.jsx";
+import { HomeTeacher } from "./pages/HomeTeacher.jsx";
 
 
 
@@ -46,6 +47,7 @@ export const router = createBrowserRouter(
         <Route path="/readings/student" element={<ReadingsViewStudents />} />
         <Route path="/reading/:id" element={<IndividualReadingViewStudent />} />
         <Route path="/readings" element={<ReadingsViewStudents />} />
+        <Route path="/homeTeacher" element={<HomeTeacher />} />
 
         
 
