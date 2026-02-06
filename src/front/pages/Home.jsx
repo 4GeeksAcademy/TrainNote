@@ -1,52 +1,83 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import { useNavigate } from "react-router-dom";
 
-export const Home = () => {
+export default function Home() {
+  const navigate = useNavigate();
 
-	const { store, dispatch } = useGlobalReducer()
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-blue-50 via-gray-100 to-blue-100">
+      <div
+        className="
+          bg-white 
+          w-full 
+          max-w-sm 
+          sm:max-w-md 
+          md:max-w-lg
+          p-6 
+          sm:p-8 
+          rounded-2xl 
+          shadow-lg 
+          text-center
+          transition-transform
+          hover:scale-[1.01]
+        "
+      >
+        {/* Header */}
+        <div className="mb-6">
+          <h1
+            className="
+              text-2xl 
+              sm:text-3xl 
+              md:text-4xl 
+              font-bold 
+              text-gray-900 
+              mb-2
+            "
+          >
+            Panel de Gestión
+          </h1>
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
+          <div className="w-16 h-1 bg-blue-600 mx-auto rounded-full mb-4" />
 
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
+          <p
+            className="
+              text-gray-500 
+              text-sm 
+              sm:text-base
+            "
+          >
+            Accede a tu área privada para gestionar tu trabajo
+          </p>
+        </div>
 
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
+        {/* Botón */}
+        <button
+          onClick={() => navigate("/login")}
+          className="
+            w-full 
+            py-3 
+            sm:py-4
+            bg-blue-600 
+            text-white 
+            rounded-xl 
+            font-semibold 
+            text-sm 
+            sm:text-base
+            hover:bg-blue-700 
+            active:scale-[0.98]
+            transition-all
+            focus:outline-none 
+            focus:ring-2 
+            focus:ring-blue-400
+          "
+        >
+          Iniciar Sesión
+        </button>
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
-
-			return data
-
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
-
-	}
-
-	useEffect(() => {
-		loadMessage()
-	}, [])
-
-	return (
-		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
-			</div>
-		</div>
-	);
-}; 
+        {/* Footer pequeño */}
+        <p className="mt-6 text-xs text-gray-400">
+          © 2026 Portal Trabajo
+        </p>
+      </div>
+    </div>
+  );
+}
