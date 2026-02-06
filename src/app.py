@@ -1,6 +1,8 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
+import resend
+from flask_swagger import swagger
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from google.oauth2.credentials import Credentials
@@ -31,6 +33,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events"
 ]
+resend.api_key = os.getenv("RESEND_API_KEY")
 
 
 def role_required(*roles):
@@ -65,6 +68,25 @@ def get_calendar_service():
             token.write(creds.to_json())
 
     return build("calendar", "v3", credentials=creds)
+
+# resend
+
+
+def send_email(to_email, subject, content):
+
+    try:
+        resend.Emails.send({
+            "from": "onboarding@resend.dev",  # puedes usar este mientras
+            "to": to_email,
+            "subject": subject,
+            "html": content
+        })
+
+        return True
+
+    except Exception as e:
+        print("ERROR EMAIL:", e)
+        return False
 
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -145,13 +167,14 @@ def get_all_readings():
         readings_serialized.append(reading.serialize())
     return jsonify(readings_serialized)
 
-#MOSTRAR LECTURA POR ID
+# MOSTRAR LECTURA POR ID
+
 
 @app.route('/reading/<int:reading_id>', methods=['GET'])
 def get_reading(reading_id):
     reading = Reading.query.get(reading_id)
     reading_serialized = reading.serialize()
-    return jsonify(reading_serialized),200
+    return jsonify(reading_serialized), 200
 
 # CREAR LECTURAS POR PROFESOR
 
@@ -164,11 +187,11 @@ def create_new_reading():
     if 'title' not in body:
         return jsonify({'msg': 'Necesitas poner un titulo a la lectura'}), 400
     if 'content' not in body:
-        return jsonify({'msg': 'Necesitas agregar contenido'}),400
+        return jsonify({'msg': 'Necesitas agregar contenido'}), 400
     if 'teacher_id' not in body:
-        return jsonify({'msg': 'Necesitas agregar teacher_id'}),400
+        return jsonify({'msg': 'Necesitas agregar teacher_id'}), 400
     if 'group_id' not in body:
-        return jsonify({'msg': 'Necesitas agregar group_id'}),400
+        return jsonify({'msg': 'Necesitas agregar group_id'}), 400
     new_reading = Reading()
     new_reading.title = body['title']
     new_reading.content = body['content']
@@ -177,7 +200,26 @@ def create_new_reading():
     db.session.add(new_reading)
     db.session.commit()
 
-    return jsonify({'msg': f'lectura {new_reading.title}agregada'})
+
+    send_email(
+        "ponercorreo",
+        "¡Hola Estudiante de Academica!, tienes una nueva lectura asignada",
+
+        f"""
+        <h2>Nueva lectura asiganada por el profesor: {new_reading.teacher.name}</h2>
+
+        <p><strong>Título:</strong> {new_reading.title}</p>
+
+        <p><strong>Contenido:</strong></p>
+        <p>{new_reading.content}</p>
+
+         <p><strong>Accede al portal y revisa tu lectura asignada</strong></p>
+
+
+        """
+        )
+
+    return jsonify({'msg': f'lectura {new_reading.title} agregada'}), 200
 
 
 # MODIFICAR LECTURA
@@ -765,10 +807,15 @@ def create_todo():
         return jsonify({"msg": "El campo description no puede estar vacío"}), 400
     if 'due_date' not in body:
         return jsonify({"msg": "El campo due_date no puede estar vacío"}), 400
+    if 'group_id' not in body:
+        return jsonify({"msg": "El campo group_id no puede estar vacío"}), 400
     new_todo = Todo(
         title=body['title'],
         description=body['description'],
         due_date=body['due_date'],
+        group_id=body['group_id']
+
+
     )
     db.session.add(new_todo)
     db.session.commit()

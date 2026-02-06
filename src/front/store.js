@@ -17,7 +17,7 @@ export const initialStore = () => {
 
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
-    case "REGISTER_STAFF_SUCCESS":
+    case "REGISTER_STAFF_SUCCESS":  
       return {
         ...store,
         user: action.payload.user,
@@ -62,6 +62,14 @@ export default function storeReducer(store, action = {}) {
         todos: store.todos.map((todo) =>
           todo.id === id ? { ...todo, background: color } : todo
         ),
+      };
+
+
+
+    case "GET_TODOS_SUCCESS":
+      return {
+        ...store,
+        todos: action.payload,
       };
 
     case "CREATE_READING_SUCCESS":
