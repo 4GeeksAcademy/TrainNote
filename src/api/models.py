@@ -29,6 +29,9 @@ class User(db.Model):
             "role": self.role,
             "is_active": self.is_active
         }
+    
+    def __repr__(self):
+        return f'Usuario: {self.name}'
 
 
 class Students_Group(db.Model):
@@ -75,11 +78,11 @@ class Todo(db.Model):
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(255))
     due_date: Mapped[Date] = mapped_column(Date, nullable=False)
-    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=True)
+    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
     teacher: Mapped["User"] = relationship(back_populates='todos')
     group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
     group: Mapped["Group"] = relationship(back_populates='todos')
-    student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'), nullable=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'))
     student: Mapped["Students_Group"] = relationship(back_populates='todos')
     submissions: Mapped[list["Submission"]] = relationship(back_populates='todo')
     def serialize(self):
@@ -138,13 +141,18 @@ class Reading(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(String(1000), nullable=False)
-    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=True)
+    teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
     teacher: Mapped["User"] = relationship(back_populates='readings')
     group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
     group: Mapped["Group"] = relationship(back_populates='readings')
 
     def __repr__(self):
-        return f'Lectura: {self.title}'
+        return {
+            f'Lectura: {self.title}',
+            f'Instrucciones: {self.content}',
+        }
+    
+
 
     def serialize(self):
         return {
