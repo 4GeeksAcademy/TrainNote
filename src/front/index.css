@@ -1,0 +1,26 @@
+.g-color-bg {
+  background-color: #5B72EE;
+}
+
+.hero-image {
+  max-height: 600px;
+}
+
+.g-color {
+  color: #5B72EE;
+}
+
+.v-color{
+  color: #00CBB8;
+}
+
+.card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 6; 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hero-home{
+  background-color: #9DCCFF;
+}
