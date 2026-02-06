@@ -1,25 +1,26 @@
 import { Link } from "react-router-dom";
 import logofinal from "../assets/img/logofinal.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import logoLogeado from "../assets/img/logoLogeado.png";
 
 export const Navbar = () => {
 	const { store, dispatch } = useGlobalReducer();
 	const { role, isAuthenticated } = store;
 
 	return (
-	<nav className="navbar hero-section">
+	<nav className={`navbar ${isAuthenticated ? "bg-white" : "g-color-bg"}`}>
 		<div className="container d-flex align-items-center justify-content-between mt-2">
 
 			<div className="d-flex align-items-center">
-				<Link to="/">
-					<img
-						src={logofinal}
-						alt="logo"
-						className="img-fluid"
-						style={{ maxHeight: "50px" }}
-					/>
+				<Link  to={isAuthenticated ? `/home${role}` : "/"}>
+						<img
+							src={isAuthenticated ? logoLogeado : logofinal}
+							alt="logo"
+							className="img-fluid"
+							style={{ maxHeight: "50px" }}
+						/>
 				</Link>
-				<span className="navbar-brand mb-0 h1 text-white ms-2">
+				<span className={`navbar-brand mb-0 h1 ms-2 ${isAuthenticated ? "g-color" : "text-white"}`}>
 					ACADEMICA
 				</span>
 			</div>
@@ -49,9 +50,9 @@ export const Navbar = () => {
 							</button>
 						</Link>
 
-						<Link to="/crear-tarea">
+						<Link to="/readings/student">
 							<button className="btn btn-info p-2 ms-2">
-								Crear tarea
+								Ver Lecturas
 							</button>
 						</Link>
 					</>
@@ -72,21 +73,17 @@ export const Navbar = () => {
 							Mis tareas
 						</button>
 					</Link>
-
 					<Link to="/readings/student">
 						<button className="btn btn-success ms-2">
-							Mis lecturas 
-						</button>
+							Ver Lecturas
+						</button>		
 					</Link>
-
-					
-</>
+					</>
 				)}
-
 				{isAuthenticated && (
 					<Link to="/">
 						<button
-							className="btn btn-outline-light ms-2"
+							className="btn btn-light ms-2"
 							onClick={() => {
 								localStorage.removeItem("token");
 								localStorage.removeItem("role");
@@ -101,4 +98,4 @@ export const Navbar = () => {
 
 		</div>
 	</nav>
-); };
+);};

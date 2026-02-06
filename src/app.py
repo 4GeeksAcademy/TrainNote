@@ -22,7 +22,7 @@ from flask_migrate import Migrate
 from flask import Flask, request, jsonify, url_for, send_from_directory, session, redirect
 import os
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
+from flask_swagger import swagger
 
 load_dotenv()
 
