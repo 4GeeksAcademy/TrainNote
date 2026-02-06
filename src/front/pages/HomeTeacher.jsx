@@ -3,7 +3,7 @@ import { TodoCard } from "../components/todoCard";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { ReadingCards } from "../components/ReadingCards";
 
-export const HomeStudent = () => {
+export const HomeTeacher = () => {
     const { store, dispatch } = useGlobalReducer();
     const todos = store.todos || [];
 

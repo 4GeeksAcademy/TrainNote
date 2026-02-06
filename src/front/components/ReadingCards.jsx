@@ -16,7 +16,7 @@ export const ReadingCards = ({reading}) => {
 			</div>
 
 			<div className="card-footer bg-white d-flex">
-				<Link to={`//reading/${reading.id}`} className="w-100">
+				<Link to={`/reading/${reading.id}`} className="w-100">
 					<button className="btn btn-primary w-100">
 						Ver lectura
 					</button>

@@ -73,7 +73,7 @@ export const Navbar = () => {
 							Mis tareas
 						</button>
 					</Link>
-					<Link to="/ReadingsViewStudent">
+					<Link to="/readings/student">
 						<button className="btn btn-success ms-2">
 							Ver Lecturas
 						</button>		
