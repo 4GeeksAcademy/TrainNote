@@ -35,34 +35,6 @@ export const router = createBrowserRouter(
     // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
 
       // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
-
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/crear-tarea" element={<CreateTodoForm />} />
-        <Route path="/signup-staff" element={<SignupStaff />} />
-        <Route path="/readings-create" element={<CreateReadings />} />
-        <Route path="/homeStudent" element={<HomeStudent />} />
-        <Route path="/readings/student" element={<ReadingsViewStudents />} />
-        <Route path="/reading/:id" element={<IndividualReadingViewStudent />} />
-        <Route path="/readings" element={<ReadingsViewStudents />} />
-        <Route path="/homeTeacher" element={<HomeTeacher />} />
-
-        
-
-
-
-
-      
-
-
-
-      </Route>
-    )
     // Root Route: All navigation will start from here.
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
 
