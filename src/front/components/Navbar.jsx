@@ -12,7 +12,7 @@ export const Navbar = () => {
 		<div className="container d-flex align-items-center justify-content-between mt-2">
 
 			<div className="d-flex align-items-center">
-				<Link to="/">
+				<Link  to={isAuthenticated ? `/home${role}` : "/"}>
 						<img
 							src={isAuthenticated ? logoLogeado : logofinal}
 							alt="logo"
@@ -67,13 +67,19 @@ export const Navbar = () => {
 				)}
 
 				{isAuthenticated && role === "STUDENT" && (
+					<>
 					<Link to="/mis-tareas">
 						<button className="btn btn-success ms-2">
 							Mis tareas
 						</button>
 					</Link>
+					<Link to="/ReadingsViewStudent">
+						<button className="btn btn-success ms-2">
+							Ver Lecturas
+						</button>		
+					</Link>
+					</>
 				)}
-
 				{isAuthenticated && (
 					<Link to="/">
 						<button
