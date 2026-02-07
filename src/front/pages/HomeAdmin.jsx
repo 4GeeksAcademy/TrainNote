@@ -2,16 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 
-const navigate = useNavigate();
-
-useEffect(() => {
-    const t = localStorage.getItem("token");
-    const r = localStorage.getItem("role");
-    if (!t || r !== "ADMIN") navigate("/login");
-}, [navigate]);
-
 export const HomeAdmin = () => {
+    const navigate = useNavigate();
     const { store } = useGlobalReducer();
+
     const role = store.role || localStorage.getItem("role");
     const token = localStorage.getItem("token");
     const backend = import.meta.env.VITE_BACKEND_URL;
@@ -45,6 +39,12 @@ export const HomeAdmin = () => {
         setActionMsg(null);
         setActionErr(null);
     };
+
+    useEffect(() => {
+        const t = localStorage.getItem("token");
+        const r = localStorage.getItem("role");
+        if (!t || r !== "ADMIN") navigate("/login");
+    }, [navigate]);
 
     const loadGroups = async () => {
         clearAlerts();
@@ -140,7 +140,6 @@ export const HomeAdmin = () => {
             setActionMsg(`✅ ${data?.msg || "Profesor asignado"}`);
             setTeacherId("");
 
-            // refrescar listado de grupos
             await loadGroups();
         } catch (e) {
             setActionErr(`❌ ${e.message}`);
@@ -242,13 +241,17 @@ export const HomeAdmin = () => {
     };
 
     useEffect(() => {
+        if (!backend || !token) return;
         loadGroups();
-    }, []);
+
+    }, [backend, token]);
 
     useEffect(() => {
+        if (!backend || !token) return;
         if (selectedGroupId) loadGroupStudents(selectedGroupId);
         else setGroupStudents([]);
-    }, [selectedGroupId]);
+
+    }, [selectedGroupId, backend, token]);
 
     return (
         <div className="container mt-4">
@@ -332,7 +335,6 @@ export const HomeAdmin = () => {
                     </button>
                 </form>
             </div>
-
 
             <div className="card p-3 mb-4">
                 <h4 className="mb-3">Asignar profesor a grupo</h4>
