@@ -196,6 +196,41 @@ def edit_reading(reading_id):
 
     return jsonify({'msg': f'Lectura {reading.name} actualizada'}), 200
 
+#                   ENDPOINT PARA TRAER PROFESORES
+@app.route("/admin/teachers", methods=["GET"])
+@role_required("ADMIN")
+def admin_get_teachers():
+    try:
+        teachers = User.query.filter_by(role="TEACHER").all()
+        return jsonify({
+            "teachers": [
+                {
+                    "id": u.id,
+                    "name": u.name,
+                    "email": u.email
+                } for u in teachers
+            ]
+        }), 200
+    except Exception as e:
+        return jsonify({"msg": "Error obteniendo profesores", "error": str(e)}), 500
+
+#                   ENDPOINT PARA TRAER ESTUDIANTES
+@app.route("/admin/students", methods=["GET"])
+@role_required("ADMIN")
+def admin_get_students():
+    try:
+        students = User.query.filter_by(role="STUDENT").all()
+        return jsonify({
+            "students": [
+                {"id": u.id, "name": u.name, "email": u.email}
+                for u in students
+            ]
+        }), 200
+    except Exception as e:
+        return jsonify({"msg": "Error obteniendo alumnos", "error": str(e)}), 500
+
+
+
 # ELIMINAR READING
 
 
