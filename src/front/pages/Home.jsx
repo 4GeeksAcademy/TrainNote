@@ -4,7 +4,7 @@ import diplomados from "../assets/img/diplomados.png";
 export const Home = () => {
 	return (
 		<div className="bg-light pb-5">
-			<div className="hero-section text-white">
+			<div className="g-color-bg text-white">
 				<div className="container">
 					<div className="row align-items-center">
 

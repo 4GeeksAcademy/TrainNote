@@ -29,6 +29,9 @@ class User(db.Model):
             "role": self.role,
             "is_active": self.is_active
         }
+    
+    def __repr__(self):
+        return f'Usuario: {self.name}'
 
 
 class Students_Group(db.Model):
@@ -144,7 +147,12 @@ class Reading(db.Model):
     group: Mapped["Group"] = relationship(back_populates='readings')
 
     def __repr__(self):
-        return f'Lectura: {self.title}'
+        return {
+            f'Lectura: {self.title}',
+            f'Instrucciones: {self.content}',
+        }
+    
+
 
     def serialize(self):
         return {
