@@ -8,6 +8,13 @@ export const Navbar = () => {
 	const { role, isAuthenticated } = store;
 
 	return (
+		<nav className="navbar hero-section">
+			<div className="container d-flex align-items-center justify-content-between mt-2">
+
+				<div className="d-flex align-items-center">
+					<Link to="/">
+						<img
+							src={logofinal}
 	<nav className={`navbar ${isAuthenticated ? "bg-white" : "g-color-bg"}`}>
 		<div className="container d-flex align-items-center justify-content-between mt-2">
 
@@ -19,53 +26,99 @@ export const Navbar = () => {
 							className="img-fluid"
 							style={{ maxHeight: "50px" }}
 						/>
+					</Link>
+					<span className="navbar-brand mb-0 h1 text-white ms-2">
+						ACADEMICA
+					</span>
+				</div>
 				</Link>
 				<span className={`navbar-brand mb-0 h1 ms-2 ${isAuthenticated ? "g-color" : "text-white"}`}>
 					ACADEMICA
 				</span>
 			</div>
 
-			<div>
-				{!isAuthenticated && (
-					<>
-						<Link to="/Signup">
-							<button className="btn btn-light ms-2">
-								Registrate
-							</button>
-						</Link>
+				<div>
+					{!isAuthenticated && (
+						<>
+							<Link to="/Signup">
+								<button className="btn btn-light ms-2">
+									Registrate
+								</button>
+							</Link>
 
-						<Link to="/Login">
-							<button className="btn btn-outline-light ms-2">
-								Ingresar
-							</button>
-						</Link>
-					</>
-				)}
+							<Link to="/Login">
+								<button className="btn btn-outline-light ms-2">
+									Ingresar
+								</button>
+							</Link>
+						</>
+					)}
 
-				{isAuthenticated && role === "TEACHER" && (
-					<>
-						<Link to="/readings-create">
-							<button className="btn btn-info ms-2">
-								Crear Lectura
-							</button>
-						</Link>
+					{isAuthenticated && role === "TEACHER" && (
+						<>
+							<Link to="/readings-create">
+								<button className="btn btn-info ms-2">
+									Crear Lectura
+								</button>
+							</Link>
 
+							<Link to="/crear-tarea">
+								<button className="btn btn-info p-2 ms-2">
+									Crear tarea
+								</button>
+							</Link>
+						</>
+					)}
+
+					{isAuthenticated && role === "ADMIN" && (
+						<Link to="/signup-staff">
+							<button className="btn btn-warning ms-2">
+								Crear Staff
 						<Link to="/readings/student">
 							<button className="btn btn-info p-2 ms-2">
 								Ver Lecturas
 							</button>
 						</Link>
-					</>
-				)}
+					)}
 
-				{isAuthenticated && role === "ADMIN" && (
-					<Link to="/SignupStaff">
-						<button className="btn btn-warning ms-2">
-							Crear Staff
-						</button>
-					</Link>
-				)}
+					{isAuthenticated && role === "STUDENT" && (
+						<>
+							<Link to="/mis-tareas">
+								<button className="btn btn-success ms-2">
+									Mis tareas
+								</button>
+							</Link>
 
+							<Link to="/readings/student">
+								<button className="btn btn-success ms-2">
+									Mis lecturas
+								</button>
+							</Link>
+
+
+						</>
+					)}
+
+					{isAuthenticated && (
+						<Link to="/">
+							<button
+								className="btn btn-outline-light ms-2"
+								onClick={() => {
+									localStorage.removeItem("token");
+									localStorage.removeItem("role");
+									dispatch({ type: "LOGOUT" });
+								}}
+							>
+								Salir
+							</button>
+						</Link>
+					)}
+				</div>
+
+			</div>
+		</nav>
+	);
+};
 				{isAuthenticated && role === "STUDENT" && (
 					<>
 					<Link to="/mis-tareas">
