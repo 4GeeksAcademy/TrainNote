@@ -20,7 +20,7 @@ import { IndividualReadingViewStudent } from "./pages/IndividualReadingViewStude
 import { HomeTeacher } from "./pages/HomeTeacher.jsx";
 
 
-import { IndividualTodoViewStudent } from "./pages/IndividualTodoViewStudent.jsx"   
+import { IndividualTodoViewStudent } from "./pages/IndividualTodoViewStudent.jsx"
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TodoViewStudent } from "./pages/TodoViewStudent.jsx";
 import { CreateGroupsAdmin } from "./pages/CreateGroupsAdmin";
@@ -35,7 +35,7 @@ export const router = createBrowserRouter(
     // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
     // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
 
-      // Root Route: All navigation will start from here.
+    // Root Route: All navigation will start from here.
     // Root Route: All navigation will start from here.
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
 
@@ -55,7 +55,8 @@ export const router = createBrowserRouter(
       <Route path="/readings" element={<ReadingsViewStudents />} />
       <Route path="/todoviewstudent" element={<TodoViewStudent />} />
       <Route path="/homeStudent" element={<ProtectedRoute allowedRoles={["STUDENT"]}> <HomeStudent /> </ProtectedRoute>} />
-      <Route path="/admin/groups" element={<ProtectedRoute allowedRoles={["ADMIN"]}> <CreateGroupsAdmin /> </ProtectedRoute>}/>
+      <Route path="/admin/groups" element={<ProtectedRoute allowedRoles={["ADMIN"]}> <CreateGroupsAdmin /> </ProtectedRoute>} />
+      <Route path="/HomeTeacher" element={<ProtectedRoute allowedRoles={["TEACHER"]}> <HomeTeacher /> </ProtectedRoute>} />
 
 
     </Route>

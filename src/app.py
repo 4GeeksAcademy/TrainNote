@@ -22,7 +22,6 @@ from flask_migrate import Migrate
 from flask import Flask, request, jsonify, url_for, send_from_directory, session, redirect
 import os
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-from flask_swagger import swagger
 
 load_dotenv()
 
@@ -200,7 +199,6 @@ def create_new_reading():
     db.session.add(new_reading)
     db.session.commit()
 
-
     send_email(
         "ponercorreo",
         "¡Hola Estudiante de Academica!, tienes una nueva lectura asignada",
@@ -217,7 +215,7 @@ def create_new_reading():
 
 
         """
-        )
+    )
 
     return jsonify({'msg': f'lectura {new_reading.title} agregada'}), 200
 
@@ -239,6 +237,8 @@ def edit_reading(reading_id):
     return jsonify({'msg': f'Lectura {reading.name} actualizada'}), 200
 
 #                   ENDPOINT PARA TRAER PROFESORES
+
+
 @app.route("/admin/teachers", methods=["GET"])
 @role_required("ADMIN")
 def admin_get_teachers():
@@ -257,6 +257,8 @@ def admin_get_teachers():
         return jsonify({"msg": "Error obteniendo profesores", "error": str(e)}), 500
 
 #                   ENDPOINT PARA TRAER ESTUDIANTES
+
+
 @app.route("/admin/students", methods=["GET"])
 @role_required("ADMIN")
 def admin_get_students():
@@ -270,7 +272,6 @@ def admin_get_students():
         }), 200
     except Exception as e:
         return jsonify({"msg": "Error obteniendo alumnos", "error": str(e)}), 500
-
 
 
 # ELIMINAR READING
@@ -419,7 +420,7 @@ def create_group():
 @app.route("/groups", methods=["GET"])
 @role_required("ADMIN", "TEACHER")
 def get_groups():
-    user_id = int(get_jwt_identity())  
+    user_id = int(get_jwt_identity())
     claims = get_jwt()
     role = claims.get("role")
 
@@ -455,7 +456,6 @@ def get_group(group_id):
 
     except Exception as e:
         return jsonify({"msg": "Error obteniendo grupo", "error": str(e)}), 500
-
 
 
 @app.route("/groups/<int:group_id>/teacher", methods=["POST"])
@@ -535,6 +535,7 @@ def add_student_to_group(group_id):
         db.session.rollback()
         return jsonify({"msg": "Error agregando estudiante al grupo", "error": str(e)}), 500
 
+
 @app.route("/groups/<int:group_id>/students", methods=["GET"])
 @role_required("TEACHER", "ADMIN")
 def get_group_students(group_id):
@@ -580,7 +581,6 @@ def remove_student_from_group(group_id, user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error removiendo estudiante", "error": str(e)}), 500
-
 
 
 @app.route("/my-groups", methods=["GET"])
@@ -885,32 +885,6 @@ def register_staff():
     return jsonify({"msg": f"Usuario {body['role']} registrado exitosamente"}), 201
 
 
-@app.route('/todos-creation', methods=['POST'])
-def create_todo():
-    body = request.get_json(silent=True)
-    if body is None:
-        return jsonify({"msg": "Complete los campos requeridos"}), 400
-    if 'title' not in body:
-        return jsonify({"msg": "El campo title no puede estar vacío"}), 400
-    if 'description' not in body:
-        return jsonify({"msg": "El campo description no puede estar vacío"}), 400
-    if 'due_date' not in body:
-        return jsonify({"msg": "El campo due_date no puede estar vacío"}), 400
-    if 'group_id' not in body:
-        return jsonify({"msg": "El campo group_id no puede estar vacío"}), 400
-    new_todo = Todo(
-        title=body['title'],
-        description=body['description'],
-        due_date=body['due_date'],
-        group_id=body['group_id']
-
-
-    )
-    db.session.add(new_todo)
-    db.session.commit()
-    return jsonify({"msg": "Todo created successfully"}), 201
-
-
 @app.route('/todos', methods=['GET'])
 def get_todos():
     todos = Todo.query.all()
@@ -1112,7 +1086,8 @@ def create_todo_automatic():
     try:
         body = request.get_json(silent=True) or {}
 
-        required = ["title", "description", "due_date", "group_id", "student_id"]
+        required = ["title", "description",
+                    "due_date", "group_id", "student_id"]
         missing = [f for f in required if f not in body or body[f] in [None, ""]]
         if missing:
             return jsonify({"msg": f"Faltan campos obligatorios: {', '.join(missing)}"}), 400
@@ -1128,14 +1103,15 @@ def create_todo_automatic():
         teacher_id = int(get_jwt_identity())
 
         try:
-            due_date = datetime.fromisoformat(str(body["due_date"]).replace("Z", "+00:00"))
+            due_date = datetime.fromisoformat(
+                str(body["due_date"]).replace("Z", "+00:00"))
         except Exception:
             return jsonify({"msg": "due_date debe ser ISO. Ej: 2026-02-10T23:59:00-03:00 (o con Z)"}), 400
 
         new_todo = Todo(
             title=body["title"],
             description=body["description"],
-            due_date=due_date,  
+            due_date=due_date,
             teacher_id=teacher_id,
             group_id=int(body["group_id"]),
             student_id=int(body["student_id"])
@@ -1451,6 +1427,7 @@ def update_google_event(event_id):
             "error": str(e)
         }), 500
 
+
 @app.route("/teacher/todos", methods=["POST"])
 @role_required("TEACHER", "ADMIN")
 def create_todo_with_google_event():
@@ -1470,7 +1447,8 @@ def create_todo_with_google_event():
             dt_start = datetime.fromisoformat(due_date_str_fixed)
 
             if dt_start.tzinfo is None:
-                dt_start = dt_start.replace(tzinfo=timezone(timedelta(hours=-3)))
+                dt_start = dt_start.replace(
+                    tzinfo=timezone(timedelta(hours=-3)))
         except Exception:
             return jsonify({
                 "msg": "due_date debe ser ISO. Ej: 2026-02-10T23:59:00-03:00 (o con Z)"
@@ -1525,7 +1503,7 @@ def create_todo_with_google_event():
             new_todo = Todo(
                 title=title,
                 description=description,
-                due_date=dt_start,          
+                due_date=dt_start,
                 teacher_id=teacher_id,
                 group_id=int(group_id),
                 student_id=int(sid)
