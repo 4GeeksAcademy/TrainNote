@@ -194,6 +194,7 @@ def create_new_reading():
     new_reading = Reading()
     new_reading.title = body['title']
     new_reading.content = body['content']
+    new_reading.reading_url = body.get('reading_url', '')
     new_reading.teacher_id = body['teacher_id']
     new_reading.group_id = body['group_id']
     db.session.add(new_reading)
@@ -1111,6 +1112,7 @@ def create_todo_automatic():
         new_todo = Todo(
             title=body["title"],
             description=body["description"],
+            archive_url=body.get("archive_url", ""),
             due_date=due_date,
             teacher_id=teacher_id,
             group_id=int(body["group_id"]),
