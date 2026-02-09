@@ -30,6 +30,7 @@ export const Navbar = () => {
 					</span>
 				</div>
 
+				{/* BOTONES */}
 				<div>
 					{!isAuthenticated && (
 						<>
@@ -64,11 +65,18 @@ export const Navbar = () => {
 					)}
 
 					{isAuthenticated && role === "ADMIN" && (
+						<>
 						<Link to="/signup-staff">
 							<button className="btn btn-warning ms-2">
 								Crear Staff
 							</button>
 						</Link>
+						<Link to="/admin/groups">
+							<button className="btn btn-warning ms-2">
+								Crear Grupos
+							</button>
+						</Link>	
+						</>
 					)}
 
 					{isAuthenticated && role === "STUDENT" && (
@@ -90,7 +98,7 @@ export const Navbar = () => {
 					{isAuthenticated && (
 						<Link to="/">
 							<button
-								className="btn btn-outline-light ms-2"
+								className="btn btn-danger ms-2"
 								onClick={() => {
 									localStorage.removeItem("token");
 									localStorage.removeItem("role");

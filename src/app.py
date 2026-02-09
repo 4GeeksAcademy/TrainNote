@@ -151,10 +151,23 @@ def serve_any_other_file(path):
     return response
 
 
-@app.route('/prueba', methods=['GET'])
-def prueba():
-    users = User.query.all()
+@app.route('/staff', methods=['GET'])
+@role_required("ADMIN")
+def staff():
+    users = User.query.filter(User.role.in_(["ADMIN", "TEACHER"])).all()
     return jsonify([user.serialize() for user in users]), 200
+
+@app.route("/me", methods=["GET"])
+@jwt_required()
+def get_current_user():
+    user_id = get_jwt_identity()
+
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    return jsonify(user.serialize()), 200
 # MOSTRAR LECTURAS
 
 
