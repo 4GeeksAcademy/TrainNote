@@ -12,6 +12,8 @@ export const initialStore = () => {
     isAuthenticated: !!token,
     readings: [],
     students: [],
+    groups: [],
+    staff: [],
   };
 };
 
@@ -91,6 +93,24 @@ export default function storeReducer(store, action = {}) {
         students: [...store.students, action.payload],
         message: "Alumno registrado correctamente",
       };
+
+      case "GET_STAFF_SUCCESS":
+        return {
+          ...store,
+          staff: action.payload,
+        };
+      
+      case "SET_GROUPS":
+        return {
+          ...store,
+          groups: action.payload,
+        };
+
+      case "SET_CURRENT_USER":
+            return {
+                ...store,
+                user: action.payload,
+            };
 
     default:
       throw Error("Unknown action.");

@@ -18,15 +18,13 @@ import { HomeStudent } from "./pages/homeStudent";
 import { ReadingsViewStudents } from "./pages/ReadingsViewStudents.jsx";
 import { IndividualReadingViewStudent } from "./pages/IndividualReadingViewStudent.jsx";
 import { HomeTeacher } from "./pages/HomeTeacher.jsx";
+import { HomeAdmin } from "./pages/HomeAdmin.jsx";
 
-import { TeacherSubmissionsList } from "./pages/TeacherSubmissionsList.jsx";
-import { TeacherSubmissionReview } from "./pages/TeacherSubmissionReview.jsx";
-import { TodoViewTeacher } from "./pages/TodoViewTeacher.jsx";
-
-import { IndividualTodoViewStudent } from "./pages/IndividualTodoViewStudent.jsx"   
+import { IndividualTodoViewStudent } from "./pages/IndividualTodoViewStudent.jsx"
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TodoViewStudent } from "./pages/TodoViewStudent.jsx";
-
+import { CreateGroupsAdmin } from "./pages/CreateGroupsAdmin";
+import { TodoDetailTeacher } from "./pages/TodoDetailTeacher.jsx";
 
 
 
@@ -38,7 +36,7 @@ export const router = createBrowserRouter(
     // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
     // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
 
-      // Root Route: All navigation will start from here.
+    // Root Route: All navigation will start from here.
     // Root Route: All navigation will start from here.
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
 
@@ -57,10 +55,11 @@ export const router = createBrowserRouter(
       <Route path="/todos/:id" element={<IndividualTodoViewStudent />} />
       <Route path="/readings" element={<ReadingsViewStudents />} />
       <Route path="/todoviewstudent" element={<TodoViewStudent />} />
-      <Route path="/todoviewteacher" element={<TodoViewTeacher />} />
-      <Route path="/teacher/submissions/review/:todoId/:submissionId" element={<TeacherSubmissionReview />} />
-      <Route path="/teachersubmissionslist/:todoId" element={<TeacherSubmissionsList />} />
-      <Route path="/homeStudent" element={<ProtectedRoute allowedRoles={["STUDENT"]}> <HomeStudent />  </ProtectedRoute>} />
+      <Route path="/homeStudent" element={<ProtectedRoute allowedRoles={["STUDENT"]}> <HomeStudent /> </ProtectedRoute>} />
+      <Route path="/admin/groups" element={<ProtectedRoute allowedRoles={["ADMIN"]}> <CreateGroupsAdmin /> </ProtectedRoute>}/>
+      <Route path="/homeTeacher" element={<ProtectedRoute allowedRoles={["TEACHER"]}> <HomeTeacher /> </ProtectedRoute>} />
+      <Route path="/homeAdmin" element={<ProtectedRoute allowedRoles={["ADMIN"]}> <HomeAdmin /> </ProtectedRoute>} />
+      <Route path="/teacher/todos/:id" element={<TodoDetailTeacher />} />
 
 
     </Route>

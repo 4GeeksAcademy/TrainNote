@@ -77,6 +77,7 @@ class Todo(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(255))
+    archive_url: Mapped[str] = mapped_column(String(500),)
     due_date: Mapped[Date] = mapped_column(Date, nullable=False)
     teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
     teacher: Mapped["User"] = relationship(back_populates='todos')
@@ -90,6 +91,7 @@ class Todo(db.Model):
             "id": self.id,
             "title": self.title,
             "description": self.description,
+            "archive_url": self.archive_url,
             "due_date": self.due_date.isoformat(),
             "teacher_id": self.teacher_id,
             "group_id": self.group_id,
@@ -101,7 +103,7 @@ class Submission(db.Model):
     __tablename__ = 'submission'
     id: Mapped[int] = mapped_column(primary_key=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
-    response_url: Mapped[str] = mapped_column(String(300))
+    response_url: Mapped[str] = mapped_column(String(500))
     todo_id: Mapped[int] = mapped_column(ForeignKey('todo.id'), nullable=False)
     todo: Mapped["Todo"] = relationship(back_populates='submissions')
     student_id: Mapped[int] = mapped_column(ForeignKey('student_group.id'), nullable=False)
@@ -141,6 +143,7 @@ class Reading(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(String(1000), nullable=False)
+    reading_url: Mapped[str] = mapped_column(String(500))
     teacher_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
     teacher: Mapped["User"] = relationship(back_populates='readings')
     group_id: Mapped[int] = mapped_column(ForeignKey('group.id'), nullable=False)
@@ -159,6 +162,7 @@ class Reading(db.Model):
             "id": self.id,
             "title": self.title,
             "content": self.content,
+            "reading_url": self.reading_url,
             "La asigno el profesor": self.teacher_id,
             "Grupo asignado": self.group_id
         }
