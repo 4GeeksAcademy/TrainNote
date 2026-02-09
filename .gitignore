@@ -3,6 +3,7 @@
 
 # track this file .gitignore (i.e. do NOT ignore it)
 !.gitignore
+!.gitattributes
 !.github
 php_errorlog
 .log
@@ -80,3 +81,10 @@ database.database
 database.db
 diagram.png
 __pycache__/
+.env
+
+# Local database (Flask / SQLite)
+src/instance/
+instance/
+*.db
+desktop.ini

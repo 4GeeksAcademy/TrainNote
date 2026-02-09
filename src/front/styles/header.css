@@ -1,0 +1,155 @@
+/* ===============================
+   MAIN HEADER (Compartido Home + Profile)
+================================ */
+
+.main-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  background: #020617;
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-subtitle {
+  margin-top: 4px;
+}
+
+/* ===============================
+   AVATAR
+================================ */
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-primary);
+  object-fit: cover;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.profile-avatar.active {
+  opacity: 1;
+}
+
+.profile-avatar:hover {
+  filter: drop-shadow(0 0 6px rgba(242, 204, 12, 0.6));
+  transform: scale(1.05);
+}
+
+
+/* ===============================
+   HOME ICON
+================================ */
+
+.nav-home-icon {
+  color: var(--accent-primary);
+  font-size: 2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  opacity: 1;
+}
+
+.nav-home-icon:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(242, 204, 12, 0.6));
+}
+
+.nav-home-icon.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(242, 204, 12, 0.8));
+}
+
+.home-btn {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.home-btn .nav-home-icon {
+  opacity: 1;
+}
+
+/* ===============================
+   EDIT PROFILE BUTTON
+================================ */
+
+.edit-profile-btn {
+  background: transparent;
+  border: 1px solid #facc15;
+  color: #facc15;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.edit-profile-btn:hover {
+  background: #facc15;
+  color: #111;
+}
+
+
+/* ===============================
+   LOGOUT BUTTON
+================================ */
+
+.settings-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-btn .logout-icon {
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--accent-primary);
+  transition: transform 0.2s ease, filter 0.2s ease;
+  opacity: 1;
+}
+
+.settings-btn:hover .logout-icon {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(242, 204, 12, 0.7));
+}
+
+/* ===============================
+   APP ROOT OFFSET (IMPORTANTE)
+================================ */
+
+.app-root {
+  padding-top: 120px;
+}
+

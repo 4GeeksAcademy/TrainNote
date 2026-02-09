@@ -1,0 +1,130 @@
+/*     SECCIÓN ACTIVIDAD         */
+
+
+.friends-activity {
+    width: 100%;
+    margin-bottom: 32px;
+}
+
+.friends-title {
+    margin-bottom: 16px;
+}
+
+/*     LISTA ACTIVIDAD           */
+
+
+/* CARDS MOVIL */
+.friends-list {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+}
+
+
+/*     TARJETA AMIGO             */
+
+.friends-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.friends-card {
+    min-width: 300px;
+    max-width: 300px;
+    flex-shrink: 0;
+
+    background: var(--panel-bg);
+    border-radius: 18px;
+    padding: 16px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    scroll-snap-align: start;
+}
+
+
+/*     AVATAR                    */
+
+
+.friends-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+
+/*     CONTENIDO       */
+
+
+.friends-content {
+    gap: 8px;
+}
+
+.friends-info strong {
+    font-weight: 600;
+}
+
+.friends-info span {
+    color: #ffffff;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.friends-info small {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    margin-top: 6px;
+}
+
+
+/*     RUTA      */
+
+
+.friends-route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.route-preview {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.route-meta {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.75rem;
+}
+
+
+/*     INTERACCIÓN               */
+
+
+.clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clickable:hover {
+    transform: translateY(-2px);
+}
+
+.clickable:active {
+     transform: scale(0.98);
+}
+

@@ -1,52 +1,86 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-export const Home = () => {
+import "../styles/home.css";
 
-	const { store, dispatch } = useGlobalReducer()
+import StartRouteButton from "../components/Home/StartRouteButton";
+import FeaturedRoutes from "../components/Home/FeaturedRoutes";
+import Garage from "../components/Profile/Garage";
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
 
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
+import { useFetchWithLoader } from "../hooks/useFetchWithLoader";
+import { session } from "../services/session";
+import { useUser } from "../context/UserContext";
 
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
+const Home = () => {
+  const navigate = useNavigate();
+  const { clearUser } = useUser();
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
+  const fetchWithLoader = useFetchWithLoader();
 
-			return data
 
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
 
-	}
 
-	useEffect(() => {
-		loadMessage()
-	}, [])
+  useEffect(() => {
+    let cancelled = false;
 
-	return (
-		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
-			</div>
-		</div>
-	);
-}; 
+    const loadData = async () => {
+      const token = session.getToken();
+      if (!token) {
+        clearUser();
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      try {
+        const resp = await fetchWithLoader(
+          `${import.meta.env.VITE_BACKEND_URL}/api/home`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (cancelled) return;
+
+        if (resp.status === 401) {
+          clearUser();
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        if (!resp.ok) return;
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error loading home data:", error);
+        }
+      }
+    };
+
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, [clearUser, fetchWithLoader, navigate]);
+
+
+  return (
+    <div className="home">
+      <div className="home-content">
+
+
+
+        <main className="home-content">
+          <StartRouteButton className="ui-btn--cta" />
+          <FeaturedRoutes />
+          <div className="ui-panel">
+            <Garage />
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Home;

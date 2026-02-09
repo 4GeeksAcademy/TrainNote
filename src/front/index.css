@@ -1,0 +1,55 @@
+/* Importar el sistema SIEMPRE primero */
+@import "./styles/design-system.css";
+@import "./styles/ui.css";
+
+/* Reset básico */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-page); /* ✅ variable, no color directo */
+}
+
+/* Tipografía base */
+body {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background: var(--bg-page); /* ✅ */
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Links */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+/* Botones base */
+button {
+  font-family: inherit;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
