@@ -18,7 +18,7 @@ import { HomeStudent } from "./pages/homeStudent";
 import { ReadingsViewStudents } from "./pages/ReadingsViewStudents.jsx";
 import { IndividualReadingViewStudent } from "./pages/IndividualReadingViewStudent.jsx";
 import { HomeTeacher } from "./pages/HomeTeacher.jsx";
-
+import { HomeAdmin } from "./pages/HomeAdmin.jsx";
 
 import { IndividualTodoViewStudent } from "./pages/IndividualTodoViewStudent.jsx"   
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -56,6 +56,8 @@ export const router = createBrowserRouter(
       <Route path="/todoviewstudent" element={<TodoViewStudent />} />
       <Route path="/homeStudent" element={<ProtectedRoute allowedRoles={["STUDENT"]}> <HomeStudent /> </ProtectedRoute>} />
       <Route path="/admin/groups" element={<ProtectedRoute allowedRoles={["ADMIN"]}> <CreateGroupsAdmin /> </ProtectedRoute>}/>
+      <Route path="/homeTeacher" element={<ProtectedRoute allowedRoles={["TEACHER"]}> <HomeTeacher /> </ProtectedRoute>} />
+      <Route path="/homeAdmin" element={<ProtectedRoute allowedRoles={["ADMIN"]}> <HomeAdmin /> </ProtectedRoute>} />
 
 
     </Route>
