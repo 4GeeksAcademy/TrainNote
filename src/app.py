@@ -157,6 +157,7 @@ def staff():
     users = User.query.filter(User.role.in_(["ADMIN", "TEACHER"])).all()
     return jsonify([user.serialize() for user in users]), 200
 
+
 @app.route("/me", methods=["GET"])
 @jwt_required()
 def get_current_user():
@@ -374,7 +375,12 @@ def login():
 
         return jsonify({
             "access_token": access_token,
-            "role": user.role
+            "role": user.role,
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email
+            }
         }), 200
 
     except Exception as e:
@@ -1453,6 +1459,7 @@ def create_todo_with_google_event():
         description = body.get("description", "")
         due_date_str = body.get("due_date")
         group_id = body.get("group_id")
+        archive_url = body.get("archive_url")
 
         if not title or not due_date_str or not group_id:
             return jsonify({"msg": "Campos obligatorios: title, due_date, group_id"}), 400
@@ -1484,18 +1491,19 @@ def create_todo_with_google_event():
             }), 400
 
         attendees_emails = []
-        student_ids = []
+        student_group_ids = []
+        student_user_ids = []
 
         for rel in students_rel:
             user = getattr(rel, "user", None)
-            if not user:
+            if not user or not getattr(user, "email", None):
                 continue
-            if not getattr(user, "email", None):
-                continue
-            attendees_emails.append(user.email)
-            student_ids.append(user.id)
 
-        if not student_ids:
+            attendees_emails.append(user.email)
+            student_group_ids.append(rel.id)
+            student_user_ids.append(user.id)
+
+        if not student_group_ids:
             return jsonify({"msg": "No se encontraron estudiantes válidos con email en el grupo."}), 400
 
         service = get_calendar_service()
@@ -1513,15 +1521,18 @@ def create_todo_with_google_event():
             sendUpdates="all"
         ).execute()
 
+        due_date_db = dt_start.date()
+
         created_todos = []
-        for sid in student_ids:
+        for sgid in student_group_ids:
             new_todo = Todo(
                 title=title,
                 description=description,
-                due_date=dt_start,
+                archive_url=archive_url,
+                due_date=due_date_db,
                 teacher_id=teacher_id,
                 group_id=int(group_id),
-                student_id=int(sid)
+                student_id=int(sgid)
             )
             db.session.add(new_todo)
             created_todos.append(new_todo)
@@ -1533,12 +1544,37 @@ def create_todo_with_google_event():
             "google_event_id": created_event.get("id"),
             "htmlLink": created_event.get("htmlLink"),
             "attendees": attendees_emails,
-            "todos_created": [{"todo_id": t.id, "student_id": t.student_id} for t in created_todos],
+            "todos_created": [
+                {"todo_id": t.id, "student_group_id": t.student_id} for t in created_todos
+            ],
+            "debug_student_user_ids": student_user_ids
         }), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error guardando la tarea en DB", "error": str(e)}), 500
+
+
+@app.route("/teacher/todos", methods=["GET"])
+@jwt_required()
+@role_required("TEACHER", "ADMIN")
+def get_teacher_todos():
+    try:
+        teacher_id = int(get_jwt_identity())
+
+        todos = Todo.query.filter_by(
+            teacher_id=teacher_id).order_by(Todo.id.desc()).all()
+
+        return jsonify({
+            "msg": "Tareas del profesor obtenidas correctamente",
+            "todos": [t.serialize() for t in todos]
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "msg": "Error obteniendo tareas del profesor",
+            "error": str(e)
+        }), 500
 
 
 @app.route("/google/events/<event_id>", methods=["GET"])
