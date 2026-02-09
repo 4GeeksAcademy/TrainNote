@@ -569,6 +569,7 @@ def get_group_students(group_id):
             continue
 
         students.append({
+            "student_group_id": sg.id, #agregado
             "user_id": sg.user.id,
             "name": sg.user.name,
             "email": sg.user.email
@@ -624,10 +625,7 @@ def get_my_groups():
     return jsonify(result), 200
 
 
-# this only runs if `$ python src/main.py` is executed
-if __name__ == '__main__':
-    PORT = int(os.environ.get('PORT', 3001))
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+
 
 
 # SUBMISION POST SUBE TAREA DE UN ESTUDIANTE CON ID
@@ -829,29 +827,13 @@ def get_submission(submission_id):
 # SUBMISION GET LISTA DE TAREAS SUBIDA POR ESTUDIANTES
 @app.route("/submissions", methods=["GET"])
 def get_submissions():
-
     try:
-
         student_id = request.args.get("student_id")
         todo_id = request.args.get("todo_id")
-
-        if student_id is None and todo_id is None:
-            return jsonify({"msg": " No existe student_id o todo_id"}), 400
-
-        if todo_id is not None:
-            todo = Todo.query.get(todo_id)
-            if todo is None:
-                return jsonify({"msg": "La tarea no existe"}), 404
-
-        if student_id is not None:
-            user = User.query.get(student_id)
-            if user is None:
-                return jsonify({"msg": "No existe el estudiante"}), 404
 
         query = Submission.query
         if student_id is not None:
             query = query.filter_by(student_id=student_id)
-
         if todo_id is not None:
             query = query.filter_by(todo_id=todo_id)
 
@@ -859,22 +841,12 @@ def get_submissions():
 
         return jsonify({
             "msg": "Listado de entrega",
-            "submissions": [
-                {
-                    "id": submission.id,
-                    "todo_id": submission.todo_id,
-                    "student_id": submission.student_id,
-                    "description": submission.description,
-                    "response_url": submission.response_url
-
-                } for submission in submissions
-            ]
-
+            "submissions": [s.serialize() for s in submissions]
         }), 200
 
     except Exception as e:
-
         return jsonify({"msg": "Error interno del servidor", "error": str(e)}), 500
+
 
 
 @app.route('/register-staff', methods=['POST'])
@@ -964,6 +936,23 @@ def delete_todo(todo_id):
     db.session.delete(todo)
     db.session.commit()
     return jsonify({"msg": "tarea eliminada exitosamente"}), 200
+
+
+# GET POINT STATUS TRAER ID DESDE SUBMISSION
+
+@app.route('/submissions/<int:submission_id>/status', methods=['GET'])
+def get_status_by_submission(submission_id):
+    status = Status.query.filter_by(submission_id=submission_id).first()
+    if not status:
+        return jsonify({"msg": "No hay calificación disponible"}), 404
+    return jsonify({
+        "id": status.id,
+        "submission_id": status.submission_id,
+        "state": status.state,
+        "feedback": status.feedback
+    }), 200
+
+
 
 
 @app.route('/statuses', methods=['GET'])
@@ -1598,3 +1587,13 @@ def get_google_event(event_id):
         }), 200
     except Exception as e:
         return jsonify({"msg": "Error obteniendo evento", "error": str(e)}), 500
+
+
+
+
+
+
+# this only runs if `$ python src/main.py` is executed
+if __name__ == '__main__':
+    PORT = int(os.environ.get('PORT', 3001))
+    app.run(host='0.0.0.0', port=PORT, debug=True)
