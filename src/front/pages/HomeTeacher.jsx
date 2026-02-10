@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { TodoCard } from "../components/todoCard";
+import { TeacherTodoCard } from "../components/TeacherTodoCard";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { ReadingCards } from "../components/ReadingCards";
 
@@ -7,32 +7,53 @@ export const HomeTeacher = () => {
   const { store, dispatch } = useGlobalReducer();
   const todos = store.todos || [];
 
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const backend = import.meta.env.VITE_BACKEND_URL;
-        const resp = await fetch(`${backend}/teacher/todos`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        const data = await resp.json();
-
-        dispatch({
-          type: "SET_TODOS",
-          payload: Array.isArray(data?.todos) ? data.todos : [],
-        });
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
+useEffect(() => {
+  const fetchTodos = async () => {
+    const backend = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem("token");
+ 
+  
+    try {
+      if (!token) {
+        console.warn("No hay token en localStorage");
         dispatch({ type: "SET_TODOS", payload: [] });
+        return;
       }
-    };
 
-    fetchTodos();
-  }, [dispatch]);
+      const resp = await fetch(`${backend}/teacher/todos`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+     
+      const data = await resp.json();
+      
+      if (!resp.ok) {
+        console.error("BACKEND ERROR:", resp.status, data);
+        dispatch({ type: "SET_TODOS", payload: [] });
+        return;
+      }
 
+        const todosArray =
+      Array.isArray(data?.todos) ? data.todos :
+      Array.isArray(data) ? data :
+      Array.isArray(data?.results) ? data.results :
+      [];
+
+    dispatch({
+      type: "SET_TODOS",
+      payload: todosArray,
+    });
+   
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      dispatch({ type: "SET_TODOS", payload: [] });
+    }
+  };
+
+  fetchTodos();
+}, [dispatch]);
+      
   const fetchReadings = async () => {
     try {
       const backend = import.meta.env.VITE_BACKEND_URL;
@@ -43,7 +64,10 @@ export const HomeTeacher = () => {
         },
       });
 
+      
+
       const data = await resp.json();
+      
 
       dispatch({
         type: "GET_READINGS_SUCCESS",
@@ -119,7 +143,7 @@ export const HomeTeacher = () => {
 
         <div className="d-flex gap-3 overflow-auto px-3 pb-3">
           {todos.map((todo) => (
-            <TodoCard key={todo.id} todo={todo} />
+            <TeacherTodoCard key={todo.id} todo={todo} />
           ))}
         </div>
       </div>
