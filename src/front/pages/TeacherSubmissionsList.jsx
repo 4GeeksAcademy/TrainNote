@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 
 export const TeacherSubmissionsList = () => {
   const { todoId } = useParams();
-
+  const navigate = useNavigate();
   const [todo, setTodo] = useState(null);
   const [students, setStudents] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -214,6 +214,14 @@ export const TeacherSubmissionsList = () => {
           ))}
         </div>
       )}
+
+       <button
+    type="button"
+    className="btn btn-sm btn-outline-secondary m-3"
+    onClick={() => navigate(-1)}
+  >
+    ← Volver
+  </button>
     </div>
   );
 };
