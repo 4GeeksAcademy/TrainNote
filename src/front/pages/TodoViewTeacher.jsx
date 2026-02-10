@@ -102,9 +102,9 @@ export const TodoViewTeacher = () => {
                                     {todo.title}
                                 </h5>
 
-                                <Link to={`/teachersubmissionslist/${todo.id}`} className="btn btn-primary me-2 w-25  ">
+                                <Link to={`/homeTeacher/todos/${todo.id}/submissions`} className="btn btn-primary me-2 w-25  ">
                                     Calificar
-                                </Link>
+                                </Link> 
 
                          {/*       <button
                                     className={`btn ${statusMap[todo.id] ? "btn-success" : "btn-outline-secondary"}`}
