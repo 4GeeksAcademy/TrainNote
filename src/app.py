@@ -9,7 +9,11 @@ from api.utils import APIException, generate_sitemap
 from api.models import db
 from api.routes import api
 from api.admin import setup_admin
-from api.commands import setup_commands
+# from api.commands import setup_commands
+
+from datetime import timedelta
+
+from flask_jwt_extended import JWTManager
 
 # from models import Person
 
@@ -17,7 +21,13 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
+
 app.url_map.strict_slashes = False
+
+# Setup the Flask-JWT-Extended extension
+app.config['JWT-SECRET-KEY'] = os.getenv('JWT-SECRET-KEY')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+jwt = JWTManager(app)
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -35,7 +45,7 @@ db.init_app(app)
 setup_admin(app)
 
 # add the admin
-setup_commands(app)
+# setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
