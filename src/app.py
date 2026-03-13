@@ -10,6 +10,8 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+from flask_jwt_extended import JWTManager
+from flask_mail import Mail, Message
 
 # from models import Person
 
@@ -17,6 +19,18 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY')
+jwt = JWTManager(app)
+
+app.config.update(
+    MAIL_SERVER='sandbox.smtp.mailtrap.io',
+    MAIL_PORT=587,
+    MAIL_USERNAME='2c6dccfc3c7e46',  
+    MAIL_PASSWORD='570362d19bc647',
+    MAIL_USE_TLS=True,
+    MAIL_USE_SSL=False
+)
+mail = Mail(app)
 app.url_map.strict_slashes = False
 
 # database condiguration
@@ -57,6 +71,8 @@ def sitemap():
     return send_from_directory(static_file_dir, 'index.html')
 
 # any other endpoint will try to serve it like a static file
+
+
 @app.route('/<path:path>', methods=['GET'])
 def serve_any_other_file(path):
     if not os.path.isfile(os.path.join(static_file_dir, path)):
