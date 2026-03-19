@@ -7,9 +7,17 @@ from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
 from api.models import db
-from api.routes import api
+from api.route.auth import auth
+from api.route.booking import booking
+from api.route.spot import spot
+from api.route.van import van
+from api.route.coment import coment
 from api.admin import setup_admin
 from api.commands import setup_commands
+from flask_jwt_extended import JWTManager
+from datetime import timedelta
+from flask_cors import CORS
+from flask_mail import Mail
 
 # from models import Person
 
@@ -17,8 +25,22 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
+CORS(app)
 app.url_map.strict_slashes = False
 
+app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY') 
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24) #para que el token dure 24 horas disponible
+
+app.config['MAIL_SERVER']='sandbox.smtp.mailtrap.io'
+app.config['MAIL_PORT'] = 2525
+app.config['MAIL_USERNAME'] = '4031c0dd788a11'
+app.config['MAIL_PASSWORD'] = '53ed6cef824690'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
+mail= Mail(app)
+
+jwt = JWTManager(app)
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -38,8 +60,12 @@ setup_admin(app)
 setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
-app.register_blueprint(api, url_prefix='/api')
 
+app.register_blueprint(auth, url_prefix='/auth')
+app.register_blueprint(spot, url_prefix='/spot')
+app.register_blueprint(van, url_prefix='/van')
+app.register_blueprint(booking, url_prefix='/booking')
+app.register_blueprint(coment, url_prefix='/coment')
 # Handle/serialize errors like a JSON object
 
 
