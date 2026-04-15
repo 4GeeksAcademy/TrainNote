@@ -9,6 +9,11 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
+import { LandingPage } from "./pages/LandingPage";
+import { AuthPage } from "./pages/AuthPage"; // <-- Importamos la nueva página de Login/Registro
+import { MyTrips } from "./pages/MyTrips";
+import { NewTrip } from "./pages/NewTrip";
+import { TripDetails } from "./pages/TripDetails";
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -19,12 +24,29 @@ export const router = createBrowserRouter(
     // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
 
       // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
+      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
+            
+            {/* Landing Page es la vista por defecto al entrar a la web */}
+            <Route index element={<LandingPage />} />
 
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
-      </Route>
+            {/* Ruta para el sistema de Autenticación (Login/Registro) */}
+            <Route path="/login" element={<AuthPage />} />
+
+            {/* Ruta para el sistema de Autenticación (mytrips) */}
+            <Route element={<MyTrips />} path="/my-trips" />
+
+            {/* Ruta para el sistema de Autenticación (newtrip) */}
+            <Route path="/new-trip" element={<NewTrip />} />
+
+            <Route path="/trip/:id" element={<TripDetails />} />
+
+            {/* Cambiamos el path de Home a "/home" para que no choque con la Landing Page */}
+            <Route path="/home" element={<Home />} />
+            
+            {/* Rutas dinámicas y de demostración */}
+            <Route path="/single/:theId" element={<Single />} />
+            <Route path="/demo" element={<Demo />} />
+            
+        </Route>
     )
 );
