@@ -1,5 +1,3 @@
-// Import necessary components and functions from react-router-dom.
-
 import {
     createBrowserRouter,
     createRoutesFromElements,
@@ -9,22 +7,44 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
+import { Registro } from "./pages/Registro";
+import { Login } from "./pages/Login";
+import { FamiliaRutina } from "./pages/FamiliaRutina";
+import { Menupadre } from "./pages/Menupadre";
+import { Addhijo } from "./pages/Addhijo.jsx";
+import { AddAutorizado } from "./pages/AddAutorizado.jsx";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AsignarRutina } from "./pages/AsignarRutina.jsx";
+import { Rutinas } from "./pages/Rutinas.jsx";
+import { CrearRutina } from "./pages/CrearRutina.jsx";
+import { DetalleRutinaHijo } from "./pages/DetalleRutinaHijo.jsx";
+import { VistaCuidador } from "./pages/VistaCuidador.jsx"; 
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
-
-      // Root Route: All navigation will start from here.
       <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
+        
+        <Route index element={<Login />} />
+        <Route path="registro" element={<Registro />} />
 
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
+        <Route path="home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="rutinas" element={<ProtectedRoute><Rutinas /></ProtectedRoute>} />
+        <Route path="crear-rutina" element={<ProtectedRoute><CrearRutina /></ProtectedRoute>} />
+        <Route path="asignar-rutina" element={<ProtectedRoute><AsignarRutina /></ProtectedRoute>} />
+        
+        <Route path="detalle-rutina-hijo/:id" element={<ProtectedRoute><DetalleRutinaHijo /></ProtectedRoute>} />
+        
+        <Route path="familia-rutina/:id" element={<ProtectedRoute><FamiliaRutina /></ProtectedRoute>} />
+        <Route path="menupadre" element={<ProtectedRoute><Menupadre /></ProtectedRoute>} />
+        <Route path="addhijo" element={<ProtectedRoute><Addhijo /></ProtectedRoute>} />
+        <Route path="add-autorizado" element={<ProtectedRoute><AddAutorizado /></ProtectedRoute>} />
+        
+        <Route path="single/:theId" element={<ProtectedRoute><Single /></ProtectedRoute>} />
+        <Route path="demo" element={<ProtectedRoute><Demo /></ProtectedRoute>} />
+        
+        
+        <Route path="vistacuidador" element={<ProtectedRoute><VistaCuidador /></ProtectedRoute>} />
+
       </Route>
     )
 );

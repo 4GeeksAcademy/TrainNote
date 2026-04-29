@@ -1,52 +1,51 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import React from "react";
+import { Link } from "react-router-dom";
+import { HeaderApp } from "../components/HeaderApp";
 
 export const Home = () => {
+  const btnStyle = {
+    backgroundColor: "var(--color-fondoBotones)",
+    borderRadius: "15px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "none",
+    padding: "1.5rem",
+    transition: "all 0.2s ease"
+  };
 
-	const { store, dispatch } = useGlobalReducer()
+  const iconStyle = { fontSize: "1.5rem", color: "var(--color-primario)" };
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
+  return (
+    <div className="w-100 h-100 d-flex flex-column">
+      
+      <HeaderApp showBackButton={false} />
 
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
+      <div className="d-flex flex-column gap-4 p-4">
+        <Link to="/Menupadre" style={{ textDecoration: "none" }}> 
+          <button className="btn w-100 shadow-sm" style={btnStyle}>
+            <i className="fas fa-users mb-2" style={iconStyle}></i>
+            <h5 className="m-0 fw-bold text-dark">MI FAMILIA</h5>
+            <small className="text-muted text-uppercase" style={{ fontSize: "0.7rem" }}>(Ruta para crear rutina)</small>
+          </button>
+        </Link>
 
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
+        <Link to="/vistacuidador" style={{ textDecoration: "none" }}>
+          <button className="btn w-100 shadow-sm" style={btnStyle}>
+            <i className="fas fa-user-friends mb-2" style={iconStyle}></i>
+            <h5 className="m-0 fw-bold text-dark">CUIDADOR/A</h5>
+            <small className="text-muted text-uppercase" style={{ fontSize: "0.7rem" }}>(Aqui se gestiona Rutina)</small>
+          </button>
+        </Link>
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
+        <button className="btn w-100 shadow-sm" style={btnStyle}>
+          <i className="fas fa-baby mb-2" style={iconStyle}></i>
+          <h5 className="m-0 fw-bold text-dark">ZZZYNC</h5>
+          <small className="text-muted text-uppercase" style={{ fontSize: "0.7rem" }}>(Visualizacion de progreso)</small>
+        </button>
+      </div>
 
-			return data
-
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
-
-	}
-
-	useEffect(() => {
-		loadMessage()
-	}, [])
-
-	return (
-		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
-			</div>
-		</div>
-	);
-}; 
+    </div>
+  );
+};
