@@ -9,6 +9,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from werkzeug.security import check_password_hash, generate_password_hash
 
 api = Blueprint('api', __name__)
+ 
 
 # Allow CORS requests to this API
 CORS(api)
