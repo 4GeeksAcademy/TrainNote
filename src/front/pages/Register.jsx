@@ -2,9 +2,16 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
 
-export const Home = () => {
+export const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    password_confirm: "",
+    company_name: "",
+    role: "employee"
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,13 +25,13 @@ export const Home = () => {
     setError("");
   };
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/login`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -35,7 +42,7 @@ export const Home = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Login failed");
+        setError(data.error || "Registration failed");
         setLoading(false);
         return;
       }
@@ -44,7 +51,7 @@ export const Home = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Redirigir al dashboard
+      // Redirigir al dashboard o home
       navigate("/dashboard");
     } catch (err) {
       setError("Connection error. Please try again.");
@@ -59,13 +66,17 @@ export const Home = () => {
       <div className={`card p-4 shadow-sm border-0 bg-white ${styles.loginCard}`}>
         
         <div className="mb-4">
-          <button type="button" className={`btn p-0 text-danger ${styles.backArrow}`}>
+          <button 
+            type="button" 
+            className={`btn p-0 text-danger ${styles.backArrow}`}
+            onClick={() => navigate("/")}
+          >
             <i className="fa-solid fa-arrow-left"></i>
           </button>
         </div>
 
-        <h2 className={`fw-bold m-0 text-dark ${styles.titleHello}`}>Hello there!</h2>
-        <h3 className={`fw-bold mb-4 text-dark ${styles.titleWelcome}`}>Welcome Back</h3>
+        <h2 className={`fw-bold m-0 text-dark ${styles.titleHello}`}>Join Us!</h2>
+        <h3 className={`fw-bold mb-4 text-dark ${styles.titleWelcome}`}>Create Account</h3>
 
         {error && (
           <div className="alert alert-danger alert-dismissible fade show" role="alert">
@@ -78,7 +89,7 @@ export const Home = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleRegister}>
           <div className="mb-3">
             <input
               type="email"
@@ -88,6 +99,17 @@ export const Home = () => {
               value={formData.email}
               onChange={handleInputChange}
               required
+            />
+          </div>
+
+          <div className="mb-3">
+            <input
+              type="text"
+              name="company_name"
+              className={`form-control py-3 px-4 border ${styles.loginInput}`}
+              placeholder="Company name (optional)"
+              value={formData.company_name}
+              onChange={handleInputChange}
             />
           </div>
 
@@ -110,10 +132,23 @@ export const Home = () => {
             </button>
           </div>
 
-          <div className="text-end mb-4">
-            <a href="#" className="text-danger text-decoration-none small fw-semibold">
-              Forgot your password?
-            </a>
+          <div className="mb-4 position-relative">
+            <input
+              type={showPasswordConfirm ? "text" : "password"}
+              name="password_confirm"
+              className={`form-control py-3 px-4 border ${styles.loginInput}`}
+              placeholder="Confirm password"
+              value={formData.password_confirm}
+              onChange={handleInputChange}
+              required
+            />
+            <button 
+              type="button" 
+              className={`btn p-0 position-absolute top-50 end-0 translate-middle-y me-3 text-secondary ${styles.passwordEye}`}
+              onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+            >
+              <i className={`fa-solid ${showPasswordConfirm ? "fa-eye-slash" : "fa-eye"}`}></i>
+            </button>
           </div>
 
           <button 
@@ -121,18 +156,18 @@ export const Home = () => {
             className={`btn w-100 py-3 fw-bold ${styles.btnLogin}`}
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Log In"}
+            {loading ? "Creating account..." : "Register"}
           </button>
         </form>
 
         <div className="text-center mt-2">
-          <span className="text-secondary small">Don't have an account? </span>
+          <span className="text-secondary small">Already have an account? </span>
           <button 
             type="button"
             className="btn btn-link p-0 text-dark fw-bold text-decoration-none small"
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/")}
           >
-            Register
+            Log in
           </button>
         </div>
 
