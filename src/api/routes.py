@@ -33,17 +33,17 @@ def login():
         return jsonify({"error": "Email is required"}), 400
     if not password:
         return jsonify({"error": "Password is required"}), 400
-        user = User.query.filter_by(email=email, is_active=True).first()
-        if not user:
-            return jsonify({"error": "Invalid email or password"}), 401
-        if not check_password_hash(user.password_hash, password):
-            return jsonify({"error": "Invalid password"}), 401
-        access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "workshop_id": user.workshop_id})
-        response = {
-            "token": access_token,
-            "user": user.serialize()
-        }     
-        if user.employee:
-            response["employee"] = user.employee.serialize()
-        return jsonify(response), 200       
+    user = User.query.filter_by(email=email, is_active=True).first()
+    if not user:
+        return jsonify({"error": "Invalid email or password"}), 401
+    if not check_password_hash(user.password_hash, password):
+        return jsonify({"error": "Invalid password"}), 401
+    access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "workshop_id": user.workshop_id})
+    response = {
+        "token": access_token,
+        "user": user.serialize()
+    }     
+    if user.employee:
+        response["employee"] = user.employee.serialize()
+    return jsonify(response), 200       
 
