@@ -7,7 +7,8 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
@@ -35,7 +36,8 @@ class User(db.Model):
 
 class ClientProfile(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id"), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
@@ -53,7 +55,8 @@ class ClientProfile(db.Model):
 
 class BusinessProfile(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id"), unique=True, nullable=False)
 
     business_name: Mapped[str] = mapped_column(String(120), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -67,10 +70,10 @@ class BusinessProfile(db.Model):
 
     user: Mapped["User"] = relationship(
         "User", back_populates="business_profile")
-    
+
     services: Mapped[list["Service"]] = relationship(
-    "Service",
-    back_populates="business"
+        "Service",
+        back_populates="business"
     )
 
     def serialize(self):
@@ -86,7 +89,8 @@ class BusinessProfile(db.Model):
             "postal_code": self.postal_code,
             "address": self.address
         }
-    
+
+
 class Service(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
 
@@ -99,7 +103,8 @@ class Service(db.Model):
     description: Mapped[str] = mapped_column(String(255), nullable=True)
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     duration_minutes: Mapped[int] = mapped_column(nullable=False)
-    status: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
+    status: Mapped[bool] = mapped_column(
+        Boolean(), nullable=False, default=True)
 
     business: Mapped["BusinessProfile"] = relationship(
         "BusinessProfile",
@@ -115,4 +120,36 @@ class Service(db.Model):
             "price": self.price,
             "duration_minutes": self.duration_minutes,
             "status": self.status,
+        }
+
+
+class Reservas(db.Model):
+    __tablename__ = 'reservas'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[int] = mapped_column(ForeignKey("client_profile.id"), nullable=False)
+    service_id: Mapped[int] = mapped_column(ForeignKey("service.id"), nullable=False)
+
+    # Campos propios de una reserva
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="pendiente")
+    notes: Mapped[str] = mapped_column(String(255), nullable=True)
+
+
+    client: Mapped["ClientProfile"] = relationship("ClientProfile")
+    service: Mapped["Service"] = relationship("Service")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "client_id": self.client_id,
+            "service_id": self.service_id,
+            # Convierte la fecha a string legible para el frontend
+            "booking_date": self.booking_date.isoformat(),
+            "status": self.status,
+            "notes": self.notes,
+            "service_detail": {
+            "name": self.service.name,
+            "price": str(self.service.price),
+            "business_id": self.service.business_id
+            } if self.service else None,
+            "client_name": self.client.name if self.client else None
         }
