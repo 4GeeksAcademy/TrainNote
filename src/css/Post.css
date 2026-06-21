@@ -1,0 +1,66 @@
+.creacion-post-container {
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.creacion-post-card {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.creacion-post-card:hover {
+    transform: translateY(-4px);
+}
+
+.creacion-post-title {
+    color: #0d6efd;
+    letter-spacing: 1px;
+}
+
+.creacion-post-input,
+.creacion-post-textarea {
+    border-radius: 12px;
+}
+
+.creacion-post-textarea {
+    resize: none;
+    min-height: 150px;
+}
+
+.preview-image {
+    max-height: 250px;
+    width: auto;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.btn-publicar,
+.btn-cancelar {
+    min-width: 130px;
+    font-weight: 600;
+}
+
+.btn-publicar {
+    transition: all 0.3s ease;
+}
+
+.btn-publicar:hover {
+    transform: translateY(-2px);
+}
+
+.btn-cancelar {
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar:hover {
+    transform: translateY(-2px);
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}

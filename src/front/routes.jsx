@@ -6,9 +6,14 @@ import {
     Route,
 } from "react-router-dom";
 import { Layout } from "./pages/Layout";
-import { Home } from "./pages/Home";
+import { Landing } from "./pages/Landing";
+import { CreacionPost } from "./pages/CreacionPost";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
+import { RegisterForm } from "./pages/RegisterForm"
+import { DataProfile } from "./pages/DataProfile"
+import { CreateForo } from "./pages/CreateForo";
+
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -19,12 +24,16 @@ export const router = createBrowserRouter(
     // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
 
       // Root Route: All navigation will start from here.
+      <>
+      <Route path= "/" element={<Landing />} />
       <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
-
         {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
         <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
+        <Route path="/creacionpost" element={<CreacionPost />} /> 
+        <Route path="/register" element={<RegisterForm />} />
+        <Route path="/data-profile" element={<DataProfile />} />
+        <Route path="/create-foro" element={<CreateForo />} />
       </Route>
+      </>
     )
 );

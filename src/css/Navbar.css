@@ -1,0 +1,17 @@
+.mindfed-navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    height: 90px;
+    display: flex;
+    align-items: center;
+}
+
+.mindfed-logo {
+    height: 60px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.mindfed-logo:hover {
+    transform: scale(1.05);
+}
