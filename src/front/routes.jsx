@@ -9,11 +9,11 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
+import { VehicleForm } from "./pages/VehicleForm";
 import { Login } from "./pages/Login";
  
 
-export const router = createBrowserRouter(
-    createRoutesFromElements(
+const Routes = createRoutesFromElements(
     // CreateRoutesFromElements function allows you to build route elements declaratively.
     // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
     // Root, on the contrary, create a sister Route, if you have doubts, try it!
@@ -31,7 +31,10 @@ export const router = createBrowserRouter(
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
         <Route path="/demo" element={<Demo />} />
+        <Route path="/vehiculos/nuevo" element={<VehicleForm />} />
       </Route>
-    )
+    
 );
+
+export const router = createBrowserRouter(routes);
 
