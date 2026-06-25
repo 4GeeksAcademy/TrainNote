@@ -184,7 +184,8 @@ export const ClientSelector = ({
                     </div>
                 )}
 
-            
+            </div>
         </div>
     );
+
 };
