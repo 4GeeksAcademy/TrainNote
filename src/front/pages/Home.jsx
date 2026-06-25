@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 
 export const Home = () => {
@@ -9,43 +10,106 @@ export const Home = () => {
         <div className="container py-5">
           <div className="row align-items-center">
             <div className="col-lg-7">
+              <span className="badge bg-warning text-dark mb-3">
+                Workshop management app
+              </span>
+
               <h1 className="display-4 fw-bold">
-                Gestiona tu taller mecánico <br />
-                <span className="text-warning">sin perder el control</span>
+                Manage your mechanic workshop <br />
+                <span className="text-warning">without losing control</span>
               </h1>
-              <p className="lead mt-3">
-                Asigna vehículos a tus mecánicos, controla el estado de cada
-                reparación y comunica a tus clientes el avance en tiempo real.
+
+              <p className="lead mt-3 text-light opacity-75">
+                Register your workshop, create mechanic accounts and keep your team organized from one simple platform.
               </p>
+
               <div className="d-flex gap-3 mt-4 flex-wrap">
-                <Link to="/registro/coordinador" className="btn btn-warning btn-lg">
-                  Dar de alta mi taller
+                <Link to="/register" className="btn btn-warning btn-lg fw-bold">
+                  Register my workshop
                 </Link>
+
                 <Link to="/login" className="btn btn-outline-light btn-lg">
-                  Iniciar sesión
+                  Sign in
                 </Link>
               </div>
             </div>
+
+            <div className="col-lg-5 mt-5 mt-lg-0">
+              <div className="card border-0 shadow-lg">
+                <div className="card-body p-4">
+                  <h2 className="h5 fw-bold mb-3 text-dark">
+                    What can you do?
+                  </h2>
+
+                  <div className="d-flex flex-column gap-3">
+                    <div className="d-flex gap-3">
+                      <span className="fs-4">✅</span>
+                      <p className="mb-0 text-muted">
+                        Create an admin account for your workshop.
+                      </p>
+                    </div>
+
+                    <div className="d-flex gap-3">
+                      <span className="fs-4">✅</span>
+                      <p className="mb-0 text-muted">
+                        Register mechanics and give them access.
+                      </p>
+                    </div>
+
+                    <div className="d-flex gap-3">
+                      <span className="fs-4">✅</span>
+                      <p className="mb-0 text-muted">
+                        Prepare the base for future repair tracking.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
       {/* FEATURES */}
       <section className="container py-5">
-        <h2 className="text-center mb-5">¿Qué incluye AppTalleres?</h2>
+        <h2 className="text-center fw-bold mb-2">
+          What does AppTalleres include?
+        </h2>
+
+        <p className="text-center text-muted mb-5">
+          A simple MVP to organize workshop users, roles and team access.
+        </p>
+
         <div className="row g-4">
           {[
-            { icon: "📋", title: "Fichas de coche", text: "Matrícula, modelo, cliente, estado y prioridad de cada vehículo." },
-            { icon: "👨‍🔧", title: "Roles diferenciados", text: "Coordinador supervisa, mecánico ejecuta. Cada uno ve lo que necesita." },
-            { icon: "🚦", title: "Estado en tiempo real", text: "Entrada, diagnóstico, esperando piezas, en reparación, finalizado, entregado." },
-            { icon: "📊", title: "Historial por vehículo", text: "Toda la trazabilidad de servicios de cada coche que pasa por tu taller." },
-          ].map((f, i) => (
-            <div className="col-md-6 col-lg-3" key={i}>
+            {
+              icon: "📋",
+              title: "Vehicle records",
+              text: "License plate, model, customer, status and priority for every vehicle."
+            },
+            {
+              icon: "👨‍🔧",
+              title: "Separated roles",
+              text: "Admins manage the workshop, mechanics focus only on their assigned tasks."
+            },
+            {
+              icon: "🚦",
+              title: "Repair tracking",
+              text: "Follow each vehicle from check-in to diagnosis, repair and delivery."
+            },
+            {
+              icon: "📊",
+              title: "Service history",
+              text: "Keep a clear record of every service performed in your workshop."
+            }
+          ].map((feature, index) => (
+            <div className="col-md-6 col-lg-3" key={index}>
               <div className="card h-100 border-0 shadow-sm">
-                <div className="card-body text-center">
-                  <div style={{ fontSize: "3rem" }}>{f.icon}</div>
-                  <h5 className="mt-3">{f.title}</h5>
-                  <p className="text-muted small">{f.text}</p>
+                <div className="card-body text-center p-4">
+                  <div style={{ fontSize: "3rem" }}>{feature.icon}</div>
+                  <h5 className="mt-3 fw-bold">{feature.title}</h5>
+                  <p className="text-muted small">{feature.text}</p>
                 </div>
               </div>
             </div>
@@ -56,10 +120,13 @@ export const Home = () => {
       {/* CTA FINAL */}
       <section className="bg-warning py-5">
         <div className="container text-center">
-          <h2>¿Listo para empezar?</h2>
-          <p className="lead">Registra tu taller en menos de 2 minutos.</p>
-          <Link to="/registro/coordinador" className="btn btn-dark btn-lg">
-            Crear cuenta gratis
+          <h2 className="fw-bold">Ready to get started?</h2>
+          <p className="lead">
+            Register your workshop in less than two minutes.
+          </p>
+
+          <Link to="/register" className="btn btn-dark btn-lg fw-bold">
+            Create free account
           </Link>
         </div>
       </section>
