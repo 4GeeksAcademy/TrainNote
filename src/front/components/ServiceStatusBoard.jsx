@@ -1,33 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./ServiceStatusBoard.css";
 
-const RAW_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:3001";
+const API_BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
-const API_BASE_URL = RAW_BACKEND_URL.endsWith("/api")
-  ? RAW_BACKEND_URL
-  : `${RAW_BACKEND_URL.replace(/\/$/, "")}/api`;
+function buildUrl(path) {return `${API_BASE_URL}${path}`;}
 
 const BOARD_COLUMNS = [
+
   {
     id: "to_repair",
     title: "Vehicles to repair",
     statuses: ["pending", "diagnosis", "budget_pending", "waiting_parts"],
   },
+
   {
     id: "in_progress",
     title: "In progress",
     statuses: ["in_repair"],
   },
+  
   {
     id: "ready_for_pickup",
     title: "Ready for pickup",
     statuses: ["ready_to_deliver"],
   },
+
   {
     id: "finished",
     title: "Finished",
     statuses: ["delivered"],
   },
+
 ];
 
 const STATUS_LABELS = {
