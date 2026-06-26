@@ -1,6 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "./Login.module.css";
+import { ServiceStatusBoard } from "../components/ServiceStatusBoard";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, "")}/api`;
+
+const emptyStats = {
+  assigned: 0,
+  in_repair: 0,
+  finished: 0
+};
 
 const getStoredObject = (key) => {
   const storedValue = localStorage.getItem(key);
@@ -12,7 +21,7 @@ const getStoredObject = (key) => {
   try {
     return JSON.parse(storedValue);
   } catch (error) {
-    console.error(`Error leyendo ${key} desde localStorage`, error);
+    console.error(`Error reading ${key} from localStorage`, error);
     localStorage.removeItem(key);
     return null;
   }
@@ -20,11 +29,64 @@ const getStoredObject = (key) => {
 
 export const MechanicDashboard = ({ user }) => {
   const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
+  const storedUser = getStoredObject("user");
   const employee = getStoredObject("employee");
+
+  const currentUser = user || storedUser;
+
+  const [stats, setStats] = useState(emptyStats);
+  const [error, setError] = useState("");
 
   const mechanicName = employee
     ? `${employee.first_name || ""} ${employee.last_name || ""}`.trim()
-    : "Mecánico";
+    : "Mechanic";
+
+  const mechanicRole =
+    employee?.role ||
+    currentUser?.employee?.role ||
+    currentUser?.role ||
+    "mechanic";
+
+  const mechanicEmail =
+    currentUser?.email ||
+    employee?.email ||
+    "No email";
+
+  const getMechanicStats = async () => {
+    try {
+      setError("");
+
+      const response = await fetch(`${API_BASE_URL}/mechanic/services`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || data.message || "Could not load mechanic services.");
+        return;
+      }
+
+      setStats(data.stats || emptyStats);
+    } catch (error) {
+      setError("Could not connect to the server.");
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    getMechanicStats();
+  }, [token, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -41,24 +103,24 @@ export const MechanicDashboard = ({ user }) => {
           <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3">
             <div>
               <p className="text-uppercase text-danger small fw-bold mb-2">
-                Panel del mecánico
+                Mechanic panel
               </p>
 
               <h1 className="fw-bold text-dark mb-2">
-                Hola, {mechanicName}
+                Hello, {mechanicName}
               </h1>
 
               <p className="text-muted mb-3">
-                Aquí verás tus coches asignados y podrás actualizar el estado de cada reparación.
+                Here you can view your assigned vehicles, update repair status, add comments, and report issues to the coordinator.
               </p>
 
               <div className="d-flex flex-column flex-md-row gap-2">
-                <span className="badge text-bg-dark  px-3 py-2">
-                  {user?.role || "mechanic"}
+                <span className="badge text-bg-dark rounded-pill px-3 py-2">
+                  {mechanicRole}
                 </span>
 
-                <span className="badge text-bg-light border text-dark px-3 py-2">
-                  {user?.email || "Sin email"}
+                <span className="badge text-bg-light border text-dark rounded-pill px-3 py-2">
+                  {mechanicEmail}
                 </span>
               </div>
             </div>
@@ -67,7 +129,7 @@ export const MechanicDashboard = ({ user }) => {
               className="btn btn-outline-danger btn-sm px-3"
               onClick={handleLogout}
             >
-              Cerrar sesión
+              Log out
             </button>
           </div>
         </header>
@@ -75,55 +137,40 @@ export const MechanicDashboard = ({ user }) => {
         <section className="row g-3 mb-4">
           <div className="col-12 col-md-4">
             <div className="bg-white border rounded-4 shadow-sm p-3 h-100">
-              <p className="text-muted small mb-1">Asignados</p>
-              <h2 className="fw-bold mb-0">0</h2>
+              <p className="text-muted small mb-1">Assigned services</p>
+              <h2 className="fw-bold mb-0">
+                {stats.assigned ?? 0}
+              </h2>
             </div>
           </div>
 
           <div className="col-12 col-md-4">
             <div className="bg-white border rounded-4 shadow-sm p-3 h-100">
-              <p className="text-muted small mb-1">En reparación</p>
-              <h2 className="fw-bold mb-0">0</h2>
+              <p className="text-muted small mb-1">In repair</p>
+              <h2 className="fw-bold mb-0">
+                {stats.in_repair ?? 0}
+              </h2>
             </div>
           </div>
 
           <div className="col-12 col-md-4">
             <div className="bg-white border rounded-4 shadow-sm p-3 h-100">
-              <p className="text-muted small mb-1">Terminados</p>
-              <h2 className="fw-bold mb-0">0</h2>
+              <p className="text-muted small mb-1">Finished</p>
+              <h2 className="fw-bold mb-0">
+                {stats.finished ?? 0}
+              </h2>
             </div>
           </div>
         </section>
 
-        <section className="bg-white border rounded-4 shadow-sm p-4">
-          <div className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-            <div>
-              <p className="text-uppercase text-muted small fw-semibold mb-2">
-                Mi trabajo
-              </p>
-
-              <h2 className="h4 fw-bold mb-2">
-                Reparaciones asignadas
-              </h2>
-
-              <p className="text-muted mb-0">
-                Más adelante aquí aparecerán los vehículos que el admin te haya asignado.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className={`btn px-4 py-2 fw-bold align-self-start ${styles.btnLogin}`}
-            >
-              Actualizar estado
-            </button>
+        {error && (
+          <div className="alert alert-danger rounded-4" role="alert">
+            {error}
           </div>
+        )}
 
-          <div className="border rounded-4 bg-light p-4 text-center">
-            <p className="text-muted mb-0">
-              Todavía no tienes reparaciones asignadas.
-            </p>
-          </div>
+        <section className="mb-4">
+          <ServiceStatusBoard role="mechanic" />
         </section>
       </main>
     </div>
