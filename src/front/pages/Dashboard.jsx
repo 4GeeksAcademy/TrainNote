@@ -13,7 +13,7 @@ const getStoredObject = (key) => {
   try {
     return JSON.parse(storedValue);
   } catch (error) {
-    console.error(`Error leyendo ${key} desde localStorage`, error);
+    console.error(`Error reading ${key} from localStorage`, error);
     localStorage.removeItem(key);
     return null;
   }
@@ -22,12 +22,13 @@ const getStoredObject = (key) => {
 export const Dashboard = () => {
   const token = localStorage.getItem("token");
   const user = getStoredObject("user");
+  const employee = getStoredObject("employee");
 
-  if (!token || !user) {
+  if (!token || !user || !employee) {
     return <Navigate to="/login" replace />;
   }
 
-  const role = user.role ? user.role.toLowerCase() : "";
+  const role = employee.role ? employee.role.toLowerCase() : "";
 
   if (role === "admin") {
     return <AdminDashboard user={user} />;
@@ -37,5 +38,5 @@ export const Dashboard = () => {
     return <MechanicDashboard user={user} />;
   }
 
-  return <Navigate to="/" replace />;
+  return <Navigate to="/login" replace />;
 };

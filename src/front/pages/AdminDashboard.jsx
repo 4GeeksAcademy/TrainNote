@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
+import { ServiceStatusBoard } from "../components/ServiceStatusBoard";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+const API_BASE_URL = `${BACKEND_URL.replace(/\/$/, "")}/api`;
 
 const emptyMechanicForm = {
   first_name: "",
@@ -12,24 +16,11 @@ const emptyMechanicForm = {
   password_confirm: ""
 };
 
-const workshopColumns = [
-  {
-    title: "En reparación",
-    description: "Vehículos que ya están siendo revisados por el equipo."
-  },
-  {
-    title: "Esperando repuestos",
-    description: "Coches detenidos hasta recibir piezas o materiales."
-  },
-  {
-    title: "Presupuesto pendiente",
-    description: "Vehículos esperando que el cliente acepte el presupuesto."
-  },
-  {
-    title: "Listos para entregar",
-    description: "Trabajos terminados y preparados para avisar al cliente."
-  }
-];
+const emptyDashboardStats = {
+  active_vehicles: 0,
+  mechanics_count: 0,
+  budget_pending: 0
+};
 
 const getStoredObject = (key) => {
   const storedValue = localStorage.getItem(key);
@@ -41,7 +32,7 @@ const getStoredObject = (key) => {
   try {
     return JSON.parse(storedValue);
   } catch (error) {
-    console.error(`Error leyendo ${key} desde localStorage`, error);
+    console.error(`Error reading ${key} from localStorage`, error);
     localStorage.removeItem(key);
     return null;
   }
@@ -49,22 +40,34 @@ const getStoredObject = (key) => {
 
 export const AdminDashboard = ({ user }) => {
   const navigate = useNavigate();
+
   const token = localStorage.getItem("token");
   const currentUser = user || getStoredObject("user");
+  const currentEmployee = getStoredObject("employee");
+
+  const currentRole =
+    currentEmployee?.role ||
+    currentUser?.employee?.role ||
+    currentUser?.role ||
+    "admin";
+
+  const currentEmail =
+    currentUser?.email ||
+    currentEmployee?.email ||
+    "Administrator";
 
   const [mechanicForm, setMechanicForm] = useState(emptyMechanicForm);
   const [mechanics, setMechanics] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(emptyDashboardStats);
+
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const getMechanics = async () => {
-    setIsLoadingList(true);
-    setError("");
-
+  const getAdminDashboard = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/mechanics`, {
+      const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`
@@ -74,13 +77,39 @@ export const AdminDashboard = ({ user }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "No se pudieron cargar los mecánicos.");
+        setError(data.error || data.message || "Could not load dashboard data.");
+        return;
+      }
+
+      setDashboardStats(data.stats || emptyDashboardStats);
+    } catch (error) {
+      setError("Could not connect to the server.");
+      console.error(error);
+    }
+  };
+
+  const getMechanics = async () => {
+    setIsLoadingList(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/mechanics`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || data.message || "Could not load mechanics.");
         return;
       }
 
       setMechanics(data.mechanics || []);
     } catch (error) {
-      setError("No se pudo conectar con el servidor.");
+      setError("Could not connect to the server.");
       console.error(error);
     } finally {
       setIsLoadingList(false);
@@ -94,7 +123,8 @@ export const AdminDashboard = ({ user }) => {
     }
 
     getMechanics();
-  }, []);
+    getAdminDashboard();
+  }, [token, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -123,14 +153,14 @@ export const AdminDashboard = ({ user }) => {
     setSuccessMessage("");
 
     if (mechanicForm.password !== mechanicForm.password_confirm) {
-      setError("Las contraseñas no coinciden.");
+      setError("Passwords do not match.");
       return;
     }
 
     setIsSaving(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/mechanics`, {
+      const response = await fetch(`${API_BASE_URL}/mechanics`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -142,7 +172,7 @@ export const AdminDashboard = ({ user }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "No se pudo crear el mecánico.");
+        setError(data.error || data.message || "Could not create mechanic.");
         return;
       }
 
@@ -155,10 +185,12 @@ export const AdminDashboard = ({ user }) => {
       setMechanicForm(emptyMechanicForm);
 
       setSuccessMessage(
-        "Mecánico creado correctamente. Ya puede entrar desde el login con su email y contraseña."
+        "Mechanic created successfully. They can now log in with their email and password."
       );
+
+      getAdminDashboard();
     } catch (error) {
-      setError("No se pudo conectar con el servidor.");
+      setError("Could not connect to the server.");
       console.error(error);
     } finally {
       setIsSaving(false);
@@ -172,56 +204,72 @@ export const AdminDashboard = ({ user }) => {
           <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3">
             <div>
               <p className="text-uppercase text-danger small fw-bold mb-2">
-                Panel del taller
+                Workshop panel
               </p>
 
               <h1 className="fw-bold text-dark mb-2">
-                Vista general del taller
+                Workshop overview
               </h1>
 
               <p className="text-muted mb-3">
-                Controla el estado de los vehículos, los presupuestos pendientes y el equipo de mecánicos.
+                Track vehicle status, pending estimates, repairs, and your mechanic team.
               </p>
 
               <div className="d-flex flex-column flex-md-row gap-2">
                 <span className="badge text-bg-dark rounded-pill px-3 py-2">
-                  {currentUser?.role || "admin"}
+                  {currentRole}
                 </span>
 
                 <span className="badge text-bg-light border text-dark rounded-pill px-3 py-2">
-                  {currentUser?.email || "Administrador"}
+                  {currentEmail}
                 </span>
               </div>
             </div>
 
-            <button
-              className="btn btn-outline-secondary btn-sm px-3"
-              onClick={handleLogout}
-            >
-              Cerrar sesión
-            </button>
+            <div className="d-flex flex-column flex-sm-row gap-2">
+              <button
+                type="button"
+                className={`btn btn-sm px-3 fw-bold ${styles.btnLogin}`}
+                onClick={() => navigate("/services/new")}
+              >
+                New service ticket
+              </button>
+
+              <button
+                className="btn btn-outline-secondary btn-sm px-3"
+                onClick={handleLogout}
+              >
+                Log out
+              </button>
+            </div>
           </div>
         </header>
 
         <section className="row g-3 mb-4">
           <div className="col-12 col-md-4">
             <div className="bg-white border rounded-4 shadow-sm p-3 h-100">
-              <p className="text-muted small mb-1">Vehículos activos</p>
-              <h2 className="fw-bold mb-0">0</h2>
+              <p className="text-muted small mb-1">Active vehicles</p>
+              <h2 className="fw-bold mb-0">
+                {dashboardStats.active_vehicles ?? 0}
+              </h2>
             </div>
           </div>
 
           <div className="col-12 col-md-4">
             <div className="bg-white border rounded-4 shadow-sm p-3 h-100">
-              <p className="text-muted small mb-1">Mecánicos registrados</p>
-              <h2 className="fw-bold mb-0">{mechanics.length}</h2>
+              <p className="text-muted small mb-1">Registered mechanics</p>
+              <h2 className="fw-bold mb-0">
+                {dashboardStats.mechanics_count ?? mechanics.length}
+              </h2>
             </div>
           </div>
 
           <div className="col-12 col-md-4">
             <div className="bg-white border rounded-4 shadow-sm p-3 h-100">
-              <p className="text-muted small mb-1">Presupuestos pendientes</p>
-              <h2 className="fw-bold mb-0">0</h2>
+              <p className="text-muted small mb-1">Pending estimates</p>
+              <h2 className="fw-bold mb-0">
+                {dashboardStats.budget_pending ?? 0}
+              </h2>
             </div>
           </div>
         </section>
@@ -238,79 +286,30 @@ export const AdminDashboard = ({ user }) => {
           </div>
         )}
 
-        <section className="bg-white border rounded-4 shadow-sm p-4 mb-4">
-          <div className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-            <div>
-              <p className="text-uppercase text-muted small fw-semibold mb-2">
-                Flujo de trabajo
-              </p>
-
-              <h2 className="h4 fw-bold mb-1">
-                Estado de los vehículos
-              </h2>
-
-              <p className="text-muted mb-0">
-                Aquí irá el tablero principal de la app, parecido a columnas tipo GitHub Projects.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className={`btn px-4 py-2 fw-bold align-self-start ${styles.btnLogin}`}
-            >
-              Nuevo vehículo
-            </button>
-          </div>
-
-          <div className="row g-3">
-            {workshopColumns.map((column) => (
-              <div className="col-12 col-md-6 col-xl-3" key={column.title}>
-                <div className="border rounded-4 bg-light p-3 h-100">
-                  <div className="d-flex justify-content-between align-items-start gap-2 mb-3">
-                    <h3 className="h6 fw-bold mb-0">
-                      {column.title}
-                    </h3>
-
-                    <span className="badge text-bg-white border text-dark rounded-pill">
-                      0
-                    </span>
-                  </div>
-
-                  <p className="text-muted small mb-3">
-                    {column.description}
-                  </p>
-
-                  <div className="bg-white border rounded-4 p-3 text-center">
-                    <p className="text-muted small mb-0">
-                      Todavía no hay coches en esta columna.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <section className="mb-4">
+          <ServiceStatusBoard role="admin" />
         </section>
 
         <section className="row g-4 align-items-start">
           <div className="col-12 col-lg-5">
             <div className="bg-white border rounded-4 shadow-sm p-4">
               <p className="text-uppercase text-muted small fw-semibold mb-2">
-                Equipo
+                Team
               </p>
 
               <h2 className="h4 fw-bold mb-2">
-                Dar de alta mecánico
+                Create mechanic account
               </h2>
 
               <p className="text-muted mb-4">
-                Crea una cuenta para que el mecánico pueda iniciar sesión y ver sus trabajos asignados.
+                Create an account so the mechanic can log in and see their assigned services.
               </p>
 
               <form onSubmit={handleCreateMechanic}>
                 <div className="row g-3">
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold" htmlFor="first_name">
-                      Nombre
+                      First name
                     </label>
 
                     <input
@@ -326,7 +325,7 @@ export const AdminDashboard = ({ user }) => {
 
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold" htmlFor="last_name">
-                      Apellido
+                      Last name
                     </label>
 
                     <input
@@ -352,13 +351,13 @@ export const AdminDashboard = ({ user }) => {
                       className="form-control py-2 px-3"
                       value={mechanicForm.dni}
                       onChange={handleInputChange}
-                      placeholder="Opcional"
+                      required
                     />
                   </div>
 
                   <div className="col-12">
                     <label className="form-label fw-semibold" htmlFor="phone">
-                      Teléfono
+                      Phone
                     </label>
 
                     <input
@@ -388,13 +387,13 @@ export const AdminDashboard = ({ user }) => {
                     />
 
                     <small className="text-muted">
-                      Este será el email que usará en el login.
+                      This is the email the mechanic will use to log in.
                     </small>
                   </div>
 
                   <div className="col-12">
                     <label className="form-label fw-semibold" htmlFor="password">
-                      Contraseña provisional
+                      Temporary password
                     </label>
 
                     <input
@@ -410,7 +409,7 @@ export const AdminDashboard = ({ user }) => {
 
                   <div className="col-12">
                     <label className="form-label fw-semibold" htmlFor="password_confirm">
-                      Confirmar contraseña
+                      Confirm password
                     </label>
 
                     <input
@@ -437,10 +436,10 @@ export const AdminDashboard = ({ user }) => {
                             role="status"
                             aria-hidden="true"
                           ></span>
-                          Creando mecánico...
+                          Creating mechanic...
                         </>
                       ) : (
-                        "Crear mecánico"
+                        "Create mechanic"
                       )}
                     </button>
                   </div>
@@ -454,15 +453,15 @@ export const AdminDashboard = ({ user }) => {
               <div className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                 <div>
                   <p className="text-uppercase text-muted small fw-semibold mb-2">
-                    Accesos
+                    Access
                   </p>
 
                   <h2 className="h4 fw-bold mb-2">
-                    Mecánicos registrados
+                    Registered mechanics
                   </h2>
 
                   <p className="text-muted mb-0">
-                    Lista de usuarios mecánicos que pueden entrar al sistema.
+                    Mechanics who can access the system and manage assigned services.
                   </p>
                 </div>
 
@@ -478,10 +477,10 @@ export const AdminDashboard = ({ user }) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Actualizando...
+                      Updating...
                     </>
                   ) : (
-                    "Actualizar"
+                    "Refresh"
                   )}
                 </button>
               </div>
@@ -493,21 +492,21 @@ export const AdminDashboard = ({ user }) => {
                     role="status"
                     aria-hidden="true"
                   ></span>
-                  Cargando mecánicos...
+                  Loading mechanics...
                 </div>
               ) : mechanics.length === 0 ? (
                 <div className="alert alert-warning rounded-4 mb-0">
-                  Todavía no hay mecánicos registrados.
+                  No mechanics have been registered yet.
                 </div>
               ) : (
                 <div className="table-responsive">
                   <table className="table table-hover align-middle mb-0">
                     <thead>
                       <tr>
-                        <th>Nombre</th>
+                        <th>Name</th>
                         <th>Email</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
+                        <th>Phone</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
 
@@ -531,8 +530,14 @@ export const AdminDashboard = ({ user }) => {
                           <td>{mechanic.phone}</td>
 
                           <td>
-                            <span className="badge text-bg-success rounded-pill">
-                              Con acceso
+                            <span
+                              className={`badge rounded-pill ${
+                                mechanic.is_active === false
+                                  ? "text-bg-warning"
+                                  : "text-bg-success"
+                              }`}
+                            >
+                              {mechanic.is_active === false ? "Inactive" : "Active"}
                             </span>
                           </td>
                         </tr>
