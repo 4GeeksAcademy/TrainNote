@@ -675,6 +675,36 @@ def delete_mechanic(employee_id):
 
 ###---------------CUSTOMERS----------------------
 
+def serialize_customer_with_vehicles(customer):
+
+    customer_data = customer.serialize()
+
+    active_vehicles = [
+        vehicle for vehicle in customer.vehicles
+        if vehicle.is_active
+    ]
+
+    customer_data["vehicles_count"] = len(active_vehicles)
+
+    customer_data["vehicles"] = [
+        {
+            "id": vehicle.id,
+            "plate": vehicle.plate,
+            "brand": vehicle.brand,
+            "model": vehicle.model,
+            "version": vehicle.version,
+            "year": vehicle.year,
+            "fuel_type": vehicle.fuel_type,
+            "mileage": vehicle.mileage,
+            "customer_id": vehicle.customer_id,
+            "workshop_id": vehicle.workshop_id,
+            "is_active": vehicle.is_active
+        }
+        for vehicle in active_vehicles
+    ]
+
+    return customer_data
+
 @api.route("/customers", methods=["GET"])
 @jwt_required()
 def get_customers():
@@ -682,13 +712,24 @@ def get_customers():
     current_user = get_current_user()
     workshop_id = get_current_workshop_id(current_user)
 
-    customers = Customer.query.filter_by(
-        workshop_id=workshop_id,
-        is_active=True
-    ).all()
+    if not workshop_id:
+        return error_response("Workshop not found for this user", 404)
+
+    customers = (
+        Customer.query
+        .filter_by(
+            workshop_id=workshop_id,
+            is_active=True
+        )
+        .order_by(Customer.created_at.desc())
+        .all()
+    )
 
     return jsonify({
-        "customers": [customer.serialize() for customer in customers]
+        "customers": [
+            serialize_customer_with_vehicles(customer)
+            for customer in customers
+        ]
     }), 200
 
 
@@ -738,7 +779,7 @@ def create_customer():
 
     return jsonify({
         "message": "Customer created successfully",
-        "customer": customer.serialize()
+        "customer": serialize_customer_with_vehicles(customer)
     }), 201
 
 
@@ -753,7 +794,7 @@ def get_customer_detail(customer_id):
         return error
 
     return jsonify({
-        "customer": customer.serialize()
+        "customer": serialize_customer_with_vehicles(customer)
     }), 200
 
 
@@ -806,7 +847,7 @@ def update_customer(customer_id):
 
     return jsonify({
         "message": "Customer updated successfully",
-        "customer": customer.serialize()
+        "customer": serialize_customer_with_vehicles(customer)
     }), 200
 
 
