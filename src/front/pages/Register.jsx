@@ -163,7 +163,7 @@ export const Register = () => {
               className={`btn p-0 position-absolute top-50 end-0 translate-middle-y me-3 text-secondary ${styles.passwordEye}`}
               onClick={() => setShowPassword(!showPassword)}
             >
-              <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+              <i className={`fa-solid ${showPassword ? "fa-eye" : "fa-eye-slash"}`}></i>
             </button>
           </div>
 
@@ -183,7 +183,7 @@ export const Register = () => {
               className={`btn p-0 position-absolute top-50 end-0 translate-middle-y me-3 text-secondary ${styles.passwordEye}`}
               onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
             >
-              <i className={`fa-solid ${showPasswordConfirm ? "fa-eye-slash" : "fa-eye"}`}></i>
+              <i className={`fa-solid ${showPasswordConfirm ? "fa-eye" : "fa-eye-slash"}`}></i>
             </button>
           </div>
 
