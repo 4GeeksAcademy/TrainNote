@@ -14,12 +14,16 @@ import { MechanicDashboard } from "./pages/MechanicDashboard";
 
 import Customer from "./pages/CustomerList";
 import { ServiceFormPage } from "./pages/ServiceFormPage";
+import MechanicList from "./pages/MechanicList";
+import VehicleList from "./pages/VehicleList";
 
 const Routes = createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found! :c</h1>}>
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="/mechanics" element={<MechanicList />} />
+        <Route path="/vehicles" element={<VehicleList />} />
 
         {/* Esta ruta solo revisa el role y redirige a /admin o /mechanic */}
         <Route path="dashboard" element={<Dashboard />} />
