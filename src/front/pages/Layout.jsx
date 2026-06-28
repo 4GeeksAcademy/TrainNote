@@ -1,14 +1,23 @@
-import { Outlet } from "react-router-dom/dist"
-import ScrollToTop from "../components/ScrollToTop"
+import React from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 
-
-// Base component that maintains the navbar and footer throughout the page and the scroll to top functionality.
 export const Layout = () => {
-    return (
-        <ScrollToTop>
-            
-                <Outlet />
+  const location = useLocation();
 
-        </ScrollToTop>
-    )
-}
+  const isDashboardRoute =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/mechanic") ||
+    location.pathname.startsWith("/dashboard");
+
+  return (
+    <>
+      {!isDashboardRoute && <Navbar />}
+
+      <Outlet />
+
+      {!isDashboardRoute && <Footer />}
+    </>
+  );
+};
