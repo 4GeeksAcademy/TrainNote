@@ -377,6 +377,7 @@ def login():
         return error_response("Invalid email or password", 401)
 
     employee = user.employee
+    workshop = Workshop.query.filter_by(id=employee.workshop_id).first()
 
     if not employee:
         return error_response("This user account has no employee profile", 403)
@@ -402,7 +403,8 @@ def login():
         "message": "Login successful",
         "token": token,
         "user": user.serialize(),
-        "employee": employee.serialize()
+        "employee": employee.serialize(),
+        "workshop": workshop.serialize()
     }), 200
 
 

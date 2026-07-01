@@ -6,6 +6,12 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   background: #f5f6f7;
@@ -16,29 +22,33 @@ body {
 ========================= */
 
 .dashboard-shell {
-  min-height: 100vh;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   background-color: #f5f6f7;
+  overflow: hidden;
 }
 
 .dashboard-main {
   flex: 1;
-  min-height: 100vh;
+  min-height: 0;
   padding: 32px clamp(28px, 6vw, 76px);
   background-color: #f5f6f7;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dashboard-sidebar {
   width: 400px;
-  min-height: 100vh;
+  min-height: 0;
   flex-shrink: 0;
   background: #1f2529;
   color: #ffffff;
   padding: 34px 32px 28px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  overflow: hidden;
 }
 
 /* =========================
@@ -191,12 +201,13 @@ body {
 .dashboard-sidebar-bottom {
   margin-top: auto;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .dashboard-workshop-info {
   background: transparent;
   padding: 0;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
   color: #ffffff;
 }
 
@@ -246,7 +257,7 @@ body {
 
 .admin-dashboard-page {
   width: 100%;
-  min-height: 100vh;
+  min-height: 0;
 }
 
 .admin-dashboard-header {
@@ -382,15 +393,21 @@ body {
 @media (max-width: 768px) {
   .dashboard-shell {
     flex-direction: column;
+    flex: initial;
+    min-height: auto;
+    overflow: visible;
   }
 
   .dashboard-sidebar {
     width: 100%;
     min-height: auto;
     padding: 24px 20px;
+    overflow: visible;
   }
 
   .dashboard-main {
+    min-height: 0;
+    overflow: visible;
     padding: 24px 18px;
   }
 

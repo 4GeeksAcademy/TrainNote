@@ -219,7 +219,7 @@ export const Register = () => {
         {field("manager_password", "Password", "password")}
         {field("manager_password_confirm", "Confirm Password", "password")}
 
-        <button type="submit" className="btn btn-primary w-100 mt-3" disabled={submitting}>
+        <button type="submit" className="btn btn-warning text-dark fw-bold w-100 py-3 rounded-4" disabled={submitting}>
           {submitting ? "Creating..." : "Create Workshop"}
         </button>
       </form>
