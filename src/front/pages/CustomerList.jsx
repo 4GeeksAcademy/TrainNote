@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Users, Search, Plus, Copy, FileSpreadsheet, FileText, TableProperties, Eye, FilterX, ArrowUpDown, Trash2, Menu } from "lucide-react";
+import { Users, Search, Plus, Copy, FileSpreadsheet, FileText, TableProperties, Eye, FilterX, ArrowUpDown, Trash2, Menu, Pencil } from "lucide-react";
 import * as XLSX from "xlsx";
 import "./CustomerList.css";
 
@@ -22,7 +22,8 @@ const INITIAL_VISIBILITY = {
     phone: true,
     vehicles_summary: true,
     email: true,
-    address: true
+    address: true,
+    actions: true
 };
 
 const initialFormState = {
@@ -75,6 +76,7 @@ export default function CustomerList() {
     const [visibleColumns, setVisibleColumns] = useState(INITIAL_VISIBILITY);
     const [selectedRows, setSelectedRows] = useState({});
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState(null);
     const [newCustomer, setNewCustomer] = useState(initialFormState);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -212,20 +214,20 @@ export default function CustomerList() {
     };
 
     const handleSelectAll = (event) => {
-    if (event.target.checked) {
-        const allSelected = { ...selectedRows }; 
-        paginatedData.forEach((row) => {
-            allSelected[row.id] = true;
-        });
-        setSelectedRows(allSelected);
-    } else {
-        const newSelected = { ...selectedRows };
-        paginatedData.forEach((row) => {
-            delete newSelected[row.id];
-        });
-        setSelectedRows(newSelected);
-    }
-};
+        if (event.target.checked) {
+            const allSelected = { ...selectedRows }; 
+            paginatedData.forEach((row) => {
+                allSelected[row.id] = true;
+            });
+            setSelectedRows(allSelected);
+        } else {
+            const newSelected = { ...selectedRows };
+            paginatedData.forEach((row) => {
+                delete newSelected[row.id];
+            });
+            setSelectedRows(newSelected);
+        }
+    };
 
     const handleSelectRow = (id) => {
         setSelectedRows((prev) => ({
@@ -243,10 +245,25 @@ export default function CustomerList() {
         }));
     };
 
+    const handleOpenEditModal = (customer) => {
+        setEditingCustomer(customer);
+        setNewCustomer({
+            first_name: customer.first_name || "",
+            last_name: customer.last_name || "",
+            dni: customer.dni || "",
+            driving_license: customer.driving_license || "",
+            phone: customer.phone || "",
+            email: customer.email || "",
+            address: customer.address || ""
+        });
+        setShowAddModal(true);
+    };
+
     const handleCloseModal = () => {
-    setShowAddModal(false);
-    setNewCustomer(initialFormState);
-};
+        setShowAddModal(false);
+        setEditingCustomer(null);
+        setNewCustomer(initialFormState);
+    };
 
     const handleSaveCustomer = async (event) => {
         event.preventDefault();
@@ -264,9 +281,14 @@ export default function CustomerList() {
 
         try {
             const token = getToken();
+            const isEditing = !!editingCustomer;
+            const method = isEditing ? "PUT" : "POST";
+            const url = isEditing 
+                ? `${API_URL}/api/customers/${editingCustomer.id}`
+                : `${API_URL}/api/customers`;
 
-            const response = await fetch(`${API_URL}/api/customers`, {
-                method: "POST",
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
@@ -277,56 +299,53 @@ export default function CustomerList() {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.error || result.message || result.msg || "Error creating customer");
+                throw new Error(result.error || result.message || result.msg || `Error ${isEditing ? "updating" : "creating"} customer`);
             }
 
-            setData((prevData) => [normalizeCustomer(result.customer), ...prevData]);
+            if (isEditing) {
+                const updatedCustomer = normalizeCustomer(result.customer || { ...editingCustomer, ...newCustomer });
+                setData((prevData) =>
+                    prevData.map((item) => (item.id === editingCustomer.id ? updatedCustomer : item))
+                );
+            } else {
+                setData((prevData) => [normalizeCustomer(result.customer), ...prevData]);
+            }
+
             setNewCustomer(initialFormState);
+            setEditingCustomer(null);
             setShowAddModal(false);
         } catch (error) {
             alert(error.message);
         }
     };
 
-    const handleDeleteSelected = async () => {
-        const selectedIds = Object.keys(selectedRows).filter((id) => selectedRows[id]);
-
-        if (selectedIds.length === 0) {
-            alert("Please select at least one customer to remove.");
-            return;
-        }
-
-        const confirmDelete = window.confirm(
-            `Are you sure you want to deactivate ${selectedIds.length} selected customer(s)?`
-        );
-
+    const handleDeleteCustomer = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to deactivate this customer?");
         if (!confirmDelete) return;
 
         try {
             const token = getToken();
+            const response = await fetch(`${API_URL}/api/customers/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
 
-            const responses = await Promise.all(
-                selectedIds.map((id) =>
-                    fetch(`${API_URL}/api/customers/${id}`, {
-                        method: "DELETE",
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                )
-            );
-
-            const hasError = responses.some((response) => !response.ok);
-
-            if (hasError) {
-                throw new Error("Some customers could not be deactivated.");
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || result.message || "Could not deactivate customer.");
             }
 
-            setData((prevData) =>
-                prevData.filter((row) => !selectedIds.includes(String(row.id)))
-            );
-
-            setSelectedRows({});
+            setData((prevData) => prevData.filter((row) => String(row.id) !== String(id)));
+            
+            if (selectedRows[id]) {
+                setSelectedRows((prev) => {
+                    const updated = { ...prev };
+                    delete updated[id];
+                    return updated;
+                });
+            }
         } catch (error) {
             alert(error.message);
         }
@@ -381,7 +400,11 @@ export default function CustomerList() {
 
                     <div className="col-md-2">
                         <button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={() => {
+                                setEditingCustomer(null);
+                                setNewCustomer(initialFormState);
+                                setShowAddModal(true);
+                            }}
                             className="btn btn-orange w-100 d-flex align-items-center justify-content-center gap-1"
                         >
                             <Plus size={18} /> Add Customer
@@ -410,14 +433,6 @@ export default function CustomerList() {
                             className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"
                         >
                             <FileText size={14} /> CSV
-                        </button>
-
-                        <button
-                            onClick={handleDeleteSelected}
-                            className="btn btn-orange-action btn-sm d-flex align-items-center"
-                            title="Deactivate selected customers"
-                        >
-                            <Trash2 size={14} />
                         </button>
 
                         <div className="position-relative">
@@ -514,6 +529,7 @@ export default function CustomerList() {
                                     {visibleColumns.vehicles_summary && <th>Vehicles</th>}
                                     {visibleColumns.email && <th>Email</th>}
                                     {visibleColumns.address && <th>Address</th>}
+                                    {visibleColumns.actions && <th>Actions</th>}
                                 </tr>
 
                                 <tr>
@@ -616,6 +632,8 @@ export default function CustomerList() {
                                             />
                                         </td>
                                     )}
+                                    
+                                    {visibleColumns.actions && <td></td>}
                                 </tr>
                             </thead>
 
@@ -664,6 +682,25 @@ export default function CustomerList() {
 
                                             {visibleColumns.email && <td>{row.email || "-"}</td>}
                                             {visibleColumns.address && <td>{row.address || "-"}</td>}
+                                            
+                                            {visibleColumns.actions && (
+                                                <td className="text-center">
+                                                    <button 
+                                                        className="action-icon-btn action-edit me-2" 
+                                                        onClick={() => handleOpenEditModal(row)}
+                                                        title="Edit customer"
+                                                    >
+                                                        <Pencil size={18} fill="currentColor" />
+                                                    </button>
+                                                    <button 
+                                                        className="action-icon-btn action-delete" 
+                                                        onClick={() => handleDeleteCustomer(row.id)}
+                                                        title="Deactivate customer"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
@@ -747,7 +784,7 @@ export default function CustomerList() {
                                     style={{ backgroundColor: "#e65100" }}
                                 >
                                     <h5 className="modal-title m-0 fw-bold text-white">
-                                        Add New Customer
+                                        {editingCustomer ? "Edit Customer" : "Add New Customer"}
                                     </h5>
 
                                     <button
@@ -851,19 +888,19 @@ export default function CustomerList() {
 
                                     <div className="modal-footer bg-light">
                                         <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={handleCloseModal}
-                                    >
-                                        Cancel
-                                    </button>
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={handleCloseModal}
+                                        >
+                                            Cancel
+                                        </button>
 
                                         <button
                                             type="submit"
                                             className="btn btn-orange text-white"
                                             style={{ backgroundColor: "#e65100" }}
                                         >
-                                            Save Customer
+                                            {editingCustomer ? "Save Changes" : "Save Customer"}
                                         </button>
                                     </div>
                                 </form>
