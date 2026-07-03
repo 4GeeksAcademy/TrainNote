@@ -4,7 +4,8 @@ import {
     TableProperties, Eye, FilterX, Menu, Pencil, Trash2,
     MapPin, Briefcase
 } from "lucide-react";
-import { apiFetch } from "../services/api";
+import * as XLSX from "xlsx"
+import { apiFetch } from "../services/api"
 import "./Mechanic-List.css";
 
 const INITIAL_FILTERS = {
@@ -104,11 +105,6 @@ export default function MechanicList() {
         }
     };
 
-    const handleColumnFilterChange = (column, value) => {
-        setColumnFilters((prev) => ({ ...prev, [column]: value }));
-        setCurrentPage(1);
-    };
-
     const handleToggleColumn = (column) => {
         setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
     };
@@ -141,6 +137,75 @@ export default function MechanicList() {
     }, [filteredData, currentPage, recordsPerPage]);
 
     const totalPages = recordsPerPage === -1 ? 1 : Math.max(1, Math.ceil(filteredData.length / recordsPerPage));
+
+    const handleCopy = () => {
+        const textToCopy = paginatedData
+            .map((row) => {
+                const line = [];
+                if (visibleColumns.name) line.push(row.full_name, row.dni);
+                if (visibleColumns.email) line.push(row.email);
+                if (visibleColumns.phone) line.push(row.phone);
+                return line.join("\t");
+            })
+            .join("\n");
+
+        navigator.clipboard.writeText(textToCopy);
+        alert("Copied visible records to clipboard.");
+    };
+
+    const handleExportExcel = () => {
+        const exportRows = paginatedData.map((row) => {
+            const filteredRow = {};
+            if (visibleColumns.name) {
+                filteredRow["Name"] = row.full_name;
+                filteredRow["DNI"] = row.dni;
+            }
+            if (visibleColumns.email) filteredRow["Email"] = row.email;
+            if (visibleColumns.phone) filteredRow["Phone"] = row.phone;
+            return filteredRow;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportRows);
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Mechanics");
+        XLSX.writeFile(workbook, "mechanic_list.xlsx");
+    };
+
+    const handleExportCSV = () => {
+        const headers = [];
+        if (visibleColumns.name) headers.push("Name", "DNI");
+        if (visibleColumns.email) headers.push("Email");
+        if (visibleColumns.phone) headers.push("Phone");
+
+        const rows = paginatedData
+            .map((row) => {
+                const line = [];
+                if (visibleColumns.name) {
+                    line.push(`"${String(row.full_name || "").replaceAll('"', '""')}"`);
+                    line.push(`"${String(row.dni || "").replaceAll('"', '""')}"`);
+                }
+                if (visibleColumns.email) {
+                    line.push(`"${String(row.email || "").replaceAll('"', '""')}"`);
+                }
+                if (visibleColumns.phone) {
+                    line.push(`"${String(row.phone || "").replaceAll('"', '""')}"`);
+                }
+                return line.join(",");
+            })
+            .join("\n");
+
+        const csvContent = `data:text/csv;charset=utf-8,${headers.join(",")}\n${rows}`;
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "mechanic_list.csv");
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleCloseModal = () => {
         setShowModal(false);
@@ -266,12 +331,6 @@ export default function MechanicList() {
 
     return (
         <>
-            <header className="bg-orange-600 text-white d-flex align-items-center px-4 shadow-sm" style={{ height: "56px", backgroundColor: "#e65100" }}>
-                <button className="btn text-white p-2 border-0 d-flex align-items-center" aria-label="Open menu">
-                    <Menu size={24} />
-                </button>
-            </header>
-
             <div className="container-fluid mt-4 px-4 app-mechanic-container">
                 <div className="d-flex align-items-center mb-4">
                     <Wrench className="me-2 text-secondary" size={32} />
@@ -296,7 +355,7 @@ export default function MechanicList() {
                         </div>
                     </div>
                     <div className="col-md-2">
-                        <button onClick={handleOpenAddModal} className="btn btn-orange w-100 d-flex align-items-center justify-content-center gap-1">
+                        <button onClick={handleOpenAddModal} className="btn btn-yellow w-100 d-flex align-items-center justify-content-center gap-1 fw-bold">
                             <Plus size={18} /> Add Mechanic
                         </button>
                     </div>
@@ -304,9 +363,9 @@ export default function MechanicList() {
 
                 <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                     <div className="d-flex gap-1 flex-wrap">
-                        <button className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"><Copy size={14} /> Copy</button>
-                        <button className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"><FileSpreadsheet size={14} /> Excel</button>
-                        <button className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"><FileText size={14} /> CSV</button>
+                        <button onClick={handleCopy} className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"><Copy size={14} /> Copy</button>
+                        <button onClick={handleExportExcel} className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"><FileSpreadsheet size={14} /> Excel</button>
+                        <button onClick={handleExportCSV} className="btn btn-orange-action btn-sm d-flex align-items-center gap-1"><FileText size={14} /> CSV</button>
 
                         <div className="position-relative">
                             <button onClick={() => setShowOptionsDropdown(!showOptionsDropdown)} className="btn btn-orange-action btn-sm d-flex align-items-center gap-1">
@@ -347,7 +406,7 @@ export default function MechanicList() {
                         {loading ? (
                             <div className="text-center py-4">Loading mechanics…</div>
                         ) : (
-                            <table className="table table-bordered align-middle m-0 mechanic-workshop-table">
+                            <table className="table table-bordered table-striped align-middle m-0 mechanic-workshop-table">
                                 <thead>
                                     <tr>
                                         {visibleColumns.name && <th>Name</th>}
@@ -401,18 +460,30 @@ export default function MechanicList() {
                     </div>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center mt-3">
+                <div className="d-flex justify-content-between align-items-center mt-3 mb-3">
                     <div className="text-muted">Showing {paginatedData.length} of {filteredData.length} entries</div>
                     <nav>
                         <ul className="pagination pagination-sm m-0">
                             <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => setCurrentPage((prev) => prev - 1)}>Previous</button>
+                                <button className="page-link"
+                                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}>Previous</button>
                             </li>
-                            <li className="page-item active">
-                                <button className="page-link">{currentPage}</button>
-                            </li>
+                            
+                            {[...Array(totalPages)].map((_, index) => (
+                                <li key={index} className={`page-item ${currentPage === index + 1 ? "active" : ""}`}>
+                                    <button className="page-link" onClick={() => setCurrentPage(index + 1)}>
+                                        {index + 1}
+                                    </button>
+                                </li>
+                            ))}
+                            
                             <li className={`page-item ${currentPage >= totalPages ? "disabled" : ""}`}>
-                                <button className="page-link" onClick={() => setCurrentPage((prev) => prev + 1)}>Next</button>
+                                <button className="page-link"
+                                        onClick={() =>
+                                            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                                        }
+                                        disabled={currentPage === totalPages}>Next</button>
                             </li>
                         </ul>
                     </nav>
@@ -422,9 +493,9 @@ export default function MechanicList() {
                     <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}>
                         <div className="modal-dialog modal-dialog-centered">
                             <div className="modal-content border-0 shadow">
-                                <div className="modal-header bg-orange text-white" style={{ backgroundColor: "#e65100" }}>
-                                    <h5 className="modal-title m-0 fw-bold text-white">Mechanic Details</h5>
-                                    <button type="button" className="btn-close btn-close-white" onClick={handleCloseViewModal}></button>
+                                <div className="modal-header border-0" style={{ backgroundColor: "var(--primary-orange)" }}>
+                                    <h5 className="modal-title m-0 fw-bold text-dark">Mechanic Details</h5>
+                                    <button type="button" className="btn-close text-dark" onClick={handleCloseViewModal}></button>
                                 </div>
                                 <div className="modal-body p-4">
                                     <div className="text-center mb-4">
@@ -478,8 +549,8 @@ export default function MechanicList() {
                                     </div>
                                 </div>
                                 <div className="modal-footer bg-light p-3">
-                                    <button type="button" className="btn btn-secondary" onClick={handleCloseViewModal}>Close</button>
-                                    <button type="button" className="btn btn-orange text-white" style={{ backgroundColor: "#ff5722" }} onClick={() => handleOpenEditModal(selectedMechanic)}>
+                                    <button type="button" className="btn btn-dark" onClick={handleCloseViewModal}>Close</button>
+                                    <button type="button" className="btn btn-save-mechanic fw-bold" onClick={() => handleOpenEditModal(selectedMechanic)}>
                                         <Pencil size={16} className="me-1" /> Edit Information
                                     </button>
                                 </div>
@@ -492,11 +563,11 @@ export default function MechanicList() {
                     <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}>
                         <div className="modal-dialog modal-dialog-centered">
                             <div className="modal-content border-0 shadow">
-                                <div className="modal-header bg-orange text-white" style={{ backgroundColor: "#e65100" }}>
-                                    <h5 className="modal-title m-0 fw-bold text-white">
+                                <div className="modal-header border-0" style={{ backgroundColor: "var(--primary-orange)" }}>
+                                    <h5 className="modal-title m-0 fw-bold text-dark">
                                         {isEditing ? "Edit mechanic account" : "Create mechanic account"}
                                     </h5>
-                                    <button type="button" className="btn-close btn-close-white" onClick={handleCloseModal}></button>
+                                    <button type="button" className="btn-close text-dark" onClick={handleCloseModal}></button>
                                 </div>
 
                                 <form onSubmit={handleSaveMechanic}>
@@ -591,7 +662,10 @@ export default function MechanicList() {
                                     </div>
 
                                     <div className="modal-footer d-flex bg-light p-3 border-top-0">
-                                        <button type="submit" className="btn btn-orange text-white w-100 py-2 fw-bold" style={{ backgroundColor: "#ff5722", borderRadius: "8px" }} disabled={saving}>
+                                        <button type="button" className="btn btn-dark" onClick={handleCloseModal}>
+                                            Cancel
+                                        </button>
+                                        <button type="submit" className="btn btn-save-mechanic fw-bold" disabled={saving}>
                                             {saving ? "Saving..." : (isEditing ? "Save changes" : "Create mechanic")}
                                         </button>
                                     </div>
