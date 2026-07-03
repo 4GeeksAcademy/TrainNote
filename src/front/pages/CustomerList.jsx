@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Users, Search, Plus, Copy, FileSpreadsheet, FileText, TableProperties, Eye, FilterX, ArrowUpDown, Trash2, Menu, Pencil } from "lucide-react";
+import { Users, Search, Plus, Copy, FileSpreadsheet, FileText, TableProperties, Eye, FilterX, ArrowUpDown, Trash2, Pencil } from "lucide-react";
 import * as XLSX from "xlsx";
 import "./CustomerList.css";
 
@@ -351,21 +351,9 @@ export default function CustomerList() {
         }
     };
 
+
     return (
         <>
-            <header
-                className="bg-orange-600 text-white d-flex align-items-center px-4 shadow-sm"
-                style={{ height: "56px", backgroundColor: "#e65100" }}
-            >
-                <button
-                    className="btn text-white p-2 border-0 d-flex align-items-center"
-                    onClick={() => console.log("Open sidebar menu")}
-                    aria-label="Open menu"
-                >
-                    <Menu size={24} />
-                </button>
-            </header>
-
             <div className="container-fluid mt-4 px-4 app-customer-container">
                 <div className="d-flex align-items-center mb-4">
                     <Users className="me-2 text-secondary" size={32} />
@@ -405,7 +393,7 @@ export default function CustomerList() {
                                 setNewCustomer(initialFormState);
                                 setShowAddModal(true);
                             }}
-                            className="btn btn-orange w-100 d-flex align-items-center justify-content-center gap-1"
+                            className="btn btn-yellow w-100 d-flex align-items-center justify-content-center gap-1 fw-bold"
                         >
                             <Plus size={18} /> Add Customer
                         </button>
@@ -685,20 +673,22 @@ export default function CustomerList() {
                                             
                                             {visibleColumns.actions && (
                                                 <td className="text-center">
-                                                    <button 
-                                                        className="action-icon-btn action-edit me-2" 
-                                                        onClick={() => handleOpenEditModal(row)}
-                                                        title="Edit customer"
-                                                    >
-                                                        <Pencil size={18} fill="currentColor" />
-                                                    </button>
-                                                    <button 
-                                                        className="action-icon-btn action-delete" 
-                                                        onClick={() => handleDeleteCustomer(row.id)}
-                                                        title="Deactivate customer"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                                    <div className="d-flex justify-content-center align-items-center gap-2">
+                                                        <button 
+                                                            className="action-icon-btn action-edit" 
+                                                            onClick={() => handleOpenEditModal(row)}
+                                                            title="Edit customer"
+                                                        >
+                                                            <Pencil size={18} fill="currentColor" />
+                                                        </button>
+                                                        <button 
+                                                            className="action-icon-btn action-delete" 
+                                                            onClick={() => handleDeleteCustomer(row.id)}
+                                                            title="Deactivate customer"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             )}
                                         </tr>
@@ -719,7 +709,7 @@ export default function CustomerList() {
                 </div>
 
                 {recordsPerPage !== -1 && (
-                    <div className="d-flex justify-content-between align-items-center mt-2">
+                    <div className="d-flex justify-content-between align-items-center mt-3 mb-3">
                         <div className="text-muted-custom">
                             {filteredData.length === 0
                                 ? "Showing 0 of 0 entries"
@@ -780,16 +770,16 @@ export default function CustomerList() {
                         <div className="modal-dialog modal-dialog-centered" role="document">
                             <div className="modal-content border-0 shadow">
                                 <div
-                                    className="modal-header bg-orange text-white"
-                                    style={{ backgroundColor: "#e65100" }}
+                                    className="modal-header border-0"
+                                    style={{ backgroundColor: "var(--primary-orange)" }}
                                 >
-                                    <h5 className="modal-title m-0 fw-bold text-white">
+                                    <h5 className="modal-title m-0 fw-bold text-dark">
                                         {editingCustomer ? "Edit Customer" : "Add New Customer"}
                                     </h5>
 
                                     <button
                                         type="button"
-                                        className="btn-close btn-close-white"
+                                        className="btn-close text-dark"
                                         onClick={handleCloseModal}
                                         aria-label="Close"
                                     ></button>
@@ -886,10 +876,10 @@ export default function CustomerList() {
                                         </div>
                                     </div>
 
-                                    <div className="modal-footer bg-light">
+                                    <div className="modal-footer bg-light border-0">
                                         <button
                                             type="button"
-                                            className="btn btn-secondary"
+                                            className="btn btn-dark"
                                             onClick={handleCloseModal}
                                         >
                                             Cancel
@@ -897,8 +887,7 @@ export default function CustomerList() {
 
                                         <button
                                             type="submit"
-                                            className="btn btn-orange text-white"
-                                            style={{ backgroundColor: "#e65100" }}
+                                            className="btn btn-save-customer fw-bold"
                                         >
                                             {editingCustomer ? "Save Changes" : "Save Customer"}
                                         </button>

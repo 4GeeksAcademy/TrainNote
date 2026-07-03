@@ -254,9 +254,7 @@ export default function VehicleList() {
 
     return (
         <div className="d-flex flex-column h-100">
-            <header className="bg-orange d-flex align-items-center px-3" style={{ height: "56px", backgroundColor: "#e65100" }}>
-                <Menu size={24} className="text-white" />
-            </header>
+
             <div className="container-fluid mt-4 px-4 app-vehicle-container">
                 <div className="d-flex align-items-center mb-4">
                     <Car className="me-2 text-secondary" size={32} />

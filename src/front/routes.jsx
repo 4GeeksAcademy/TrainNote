@@ -85,7 +85,7 @@ const Routes = createRoutesFromElements(
         {/* Rutas viejas / pruebas */}
         <Route path="single/:theId" element={<Single />} />
         <Route path="demo" element={<Demo />} />
-    </Route>
+    </Route> 
 );
 
 export const router = createBrowserRouter(Routes);
