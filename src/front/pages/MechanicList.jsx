@@ -561,7 +561,7 @@ export default function MechanicList() {
 
                 {showModal && (
                     <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}>
-                        <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-dialog modal-dialog-centered modal-lg">
                             <div className="modal-content border-0 shadow">
                                 <div className="modal-header border-0" style={{ backgroundColor: "var(--primary-orange)" }}>
                                     <h5 className="modal-title m-0 fw-bold text-dark">

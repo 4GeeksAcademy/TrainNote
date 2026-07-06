@@ -720,7 +720,7 @@ export default function CustomerList() {
                         </div>
 
                         <nav>
-                            <ul className="pagination mb-0">
+                            <ul className="pagination pagination-sm mb-0">
                                 <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                                     <button
                                         className="page-link"
@@ -767,7 +767,7 @@ export default function CustomerList() {
                         style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}
                         role="dialog"
                     >
-                        <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
                             <div className="modal-content border-0 shadow">
                                 <div
                                     className="modal-header border-0"

@@ -77,6 +77,8 @@ export function ServiceDetailsModal({
   const [loading, setLoading] = useState(true);
   const [savingComment, setSavingComment] = useState(false);
   const [error, setError] = useState("");
+  const [showMechanicMenu, setShowMechanicMenu] = useState(false);
+  const [availableMechanics, setAvailableMechanics] = useState([]);
 
   const isMechanic = role === "mechanic";
 
@@ -202,16 +204,60 @@ export function ServiceDetailsModal({
               ) : (
                 <>
                   <div className="mb-4">
-                    <div className="d-flex gap-2 mb-3">
-                      <strong className="badge bg-warning text-dark">
-                        {STATUS_LABELS[service.status] || service.status}
-                      </strong>
+                    <div className="d-flex justify-content-between align-items-start mb-3">
+                      <div className="d-flex gap-2">
+                        <strong className="badge bg-warning text-dark">
+                          {STATUS_LABELS[service.status] || service.status}
+                        </strong>
 
-                      <strong className="badge bg-dark">
-                        {PRIORITY_LABELS[service.priority] ||
-                          service.priority ||
-                          "Normal"}
-                      </strong>
+                        <strong className="badge bg-dark">
+                          {PRIORITY_LABELS[service.priority] ||
+                            service.priority ||
+                            "Normal"}
+                        </strong>
+                      </div>
+
+                      {/* --- INICIO DEL BOTÓN AGREGADO --- */}
+                      <div className="dropdown position-relative">
+                        <button
+                          type="button"
+                          className="btn btn-light border text-secondary fw-semibold d-flex align-items-center gap-2"
+                          onClick={() => setShowMechanicMenu(!showMechanicMenu)}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <line x1="19" y1="8" x2="19" y2="14"></line>
+                            <line x1="22" y1="11" x2="16" y2="11"></line>
+                          </svg>
+                          REASSIGN MECHANIC
+                        </button>
+                        
+                        {showMechanicMenu && (
+                          <ul 
+                            className="dropdown-menu show shadow-sm" 
+                            style={{ display: 'block', position: 'absolute', right: 0, top: '100%', zIndex: 1050 }}
+                          >
+                            {availableMechanics.length === 0 ? (
+                              <li>
+                                <span className="dropdown-item text-muted small pe-none">
+                                  You must select a mechanic
+                                </span>
+                              </li>
+                            ) : (
+                              availableMechanics.map((mech, index) => (
+                                <li key={index}>
+                                  <button className="dropdown-item" type="button">
+                                    {mech.name}
+                                  </button>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                      {/* --- FIN DEL BOTÓN AGREGADO --- */}
+
                     </div>
 
                     <p className="mb-0">
@@ -373,14 +419,14 @@ export function ServiceDetailsModal({
             <div className="modal-footer">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-dark"
                 onClick={onClose}
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
+        </div> 
       </div>
 
       <div className="modal-backdrop show"></div>

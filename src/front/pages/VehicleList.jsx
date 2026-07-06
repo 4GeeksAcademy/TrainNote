@@ -271,7 +271,7 @@ export default function VehicleList() {
                         </div>
                     </div>
                     <div className="col-md-2">
-                        <button className="btn btn-orange w-100" onClick={handleOpenAddModal}><Plus size={18} /> Add Vehicle</button>
+                        <button className="btn btn-yellow w-100 fw-bold" onClick={handleOpenAddModal}><Plus size={18} /> Add Vehicle</button>
                     </div>
                 </div>
 
@@ -372,7 +372,7 @@ export default function VehicleList() {
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header d-flex justify-content-between align-items-center p-3 border-bottom">
-                                <h5 className="m-0">{editingVehicle ? "Edit Vehicle" : "Add Vehicle"}</h5>
+                                <h5 className="text-dark m-0">{editingVehicle ? "Edit Vehicle" : "Add Vehicle"}</h5>
                                 <button className="btn-close" onClick={handleCloseModal}></button>
                             </div>
                             <form onSubmit={handleSave}>
@@ -442,8 +442,11 @@ export default function VehicleList() {
                                         <input className="form-control" name="first_registration_date" type="date" value={formState.first_registration_date} onChange={handleInputChange} />
                                     </div>
                                 </div>
-                                <div className="modal-footer p-3 bg-light">
-                                    <button type="submit" className="btn btn-orange w-100" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
+                                <div className="modal-footer d-flex bg-light p-3 border-top-0">
+                                    <button type="button" className="btn btn-dark" onClick={handleCloseModal}>
+                                            Cancel
+                                        </button>
+                                    <button type="submit" className="btn btn-changed fw-bold" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
                                 </div>
                             </form>
                         </div>

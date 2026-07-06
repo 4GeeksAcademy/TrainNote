@@ -58,7 +58,7 @@
 }
 
 .text-muted-custom {
-    font-size: 0.9rem;
+    font-size: 0.2rem;
     color: #6c757d;
 }
 
@@ -151,4 +151,14 @@
 .customer-workshop-table tbody td {
     padding: 1rem 0.70rem; 
     vertical-align: middle;
+}
+
+.modal-content {
+    border-radius: 14px;
+}
+
+.form-control::placeholder {
+    color: #adb5bd; 
+    opacity: 1; 
+    font-weight: 400;
 }
