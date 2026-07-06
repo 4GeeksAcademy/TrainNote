@@ -313,6 +313,9 @@ class ServiceComment(db.Model):
     comment = db.Column(db.Text, nullable=False)
     comment_type = db.Column(db.String(50), default="note", nullable=False)
 
+    image_url = db.Column(db.String(500), nullable=True)
+    image_public_id = db.Column(db.String(255), nullable=True)
+
     service_id = db.Column(db.Integer, db.ForeignKey("services.id"), nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey("employees.id"), nullable=True)
 
@@ -331,8 +334,9 @@ class ServiceComment(db.Model):
             "employee_id": self.employee_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "author_name": f"{self.author.first_name} {self.author.last_name}" if self.author else None,
-            "author_email": self.author.user.email if self.author and self.author.user else None
-
+            "author_email": self.author.user.email if self.author and self.author.user else None,
+            "image_url": self.image_url,
+            "image_public_id": self.image_public_id,
         }
 
 
