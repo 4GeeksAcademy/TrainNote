@@ -10,13 +10,16 @@ from api.models import db
 from api.routes import api, bcrypt
 from api.admin import setup_admin
 
+from api.cloudinary_config import configure_cloudinary
+
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
+configure_cloudinary()
+
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
-
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
