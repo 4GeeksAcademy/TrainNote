@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../services/api";
 
 const STATUS_LABELS = {
@@ -73,6 +73,9 @@ export function ServiceDetailsModal({
 
   const [commentText, setCommentText] = useState("");
   const [commentType, setCommentType] = useState("note");
+  const [commentImage, setCommentImage] = useState(null);
+  const [commentImagePreview, setCommentImagePreview] = useState("");
+  const fileInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [savingComment, setSavingComment] = useState(false);
@@ -114,6 +117,19 @@ export function ServiceDetailsModal({
     };
   }, []);
 
+  function handleCommentImageChange(event) {
+    const selectedImage = event.target.files[0];
+
+    if (!selectedImage) {
+      setCommentImage(null);
+      setCommentImagePreview("");
+      return;
+    }
+
+    setCommentImage(selectedImage);
+    setCommentImagePreview(URL.createObjectURL(selectedImage));
+  }
+
   async function handleSubmitComment(event) {
     event.preventDefault();
 
@@ -126,16 +142,43 @@ export function ServiceDetailsModal({
       setSavingComment(true);
       setError("");
 
-      await apiFetch(`/services/${serviceId}/comments`, {
-        method: "POST",
-        body: {
-          comment: commentText.trim(),
-          comment_type: commentType,
-        },
-      });
+      const token = localStorage.getItem("token");
+
+      const formData = new FormData();
+      formData.append("comment", commentText.trim());
+      formData.append("comment_type", commentType);
+
+      if (commentImage) {
+        formData.append("image", commentImage);
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/services/${serviceId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Could not save comment."
+        );
+      }
 
       setCommentText("");
       setCommentType("note");
+      setCommentImage(null);
+      setCommentImagePreview("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
       await loadDetails();
 
@@ -198,9 +241,7 @@ export function ServiceDetailsModal({
                   <p className="text-muted">Loading service details...</p>
                 </div>
               ) : !service ? (
-                <div className="alert alert-info">
-                  Service not found.
-                </div>
+                <div className="alert alert-info">Service not found.</div>
               ) : (
                 <>
                   <div className="mb-4">
@@ -323,21 +364,14 @@ export function ServiceDetailsModal({
                   <hr />
 
                   <div className="mb-4">
-                    <h6 className="fw-bold">
-                      Comments ({comments.length})
-                    </h6>
+                    <h6 className="fw-bold">Comments ({comments.length})</h6>
 
                     {comments.length === 0 ? (
-                      <p className="text-muted mb-0">
-                        No comments yet.
-                      </p>
+                      <p className="text-muted mb-0">No comments yet.</p>
                     ) : (
                       <div className="list-group">
                         {comments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="list-group-item"
-                          >
+                          <div key={comment.id} className="list-group-item">
                             <div className="d-flex justify-content-between mb-2">
                               <strong>
                                 {comment.author_name || "Unknown author"}
@@ -355,6 +389,18 @@ export function ServiceDetailsModal({
                             </p>
 
                             <p className="mb-0">{comment.comment}</p>
+
+                            {comment.image_url && (
+                              <img
+                                src={comment.image_url}
+                                alt="Service comment"
+                                className="img-fluid rounded border mt-3"
+                                style={{
+                                  maxHeight: "260px",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            )}
                           </div>
                         ))}
                       </div>
@@ -366,9 +412,7 @@ export function ServiceDetailsModal({
                       <h6 className="fw-bold mb-3">Add Comment</h6>
 
                       <div className="mb-3">
-                        <label className="form-label">
-                          Comment type
-                        </label>
+                        <label className="form-label">Comment type</label>
 
                         <select
                           className="form-select"
@@ -387,9 +431,7 @@ export function ServiceDetailsModal({
                       </div>
 
                       <div className="mb-3">
-                        <label className="form-label">
-                          Comment
-                        </label>
+                        <label className="form-label">Comment</label>
 
                         <textarea
                           className="form-control"
@@ -402,6 +444,37 @@ export function ServiceDetailsModal({
                           disabled={savingComment}
                         />
                       </div>
+
+                      <div className="mb-3">
+                        <label className="form-label">Upload image</label>
+
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="form-control"
+                          accept="image/*"
+                          onChange={handleCommentImageChange}
+                          disabled={savingComment}
+                        />
+                      </div>
+
+                      {commentImagePreview && (
+                        <div className="mb-3">
+                          <p className="small text-muted mb-2">
+                            Image preview:
+                          </p>
+
+                          <img
+                            src={commentImagePreview}
+                            alt="Selected service comment"
+                            className="img-fluid rounded border"
+                            style={{
+                              maxHeight: "220px",
+                              objectFit: "cover",
+                            }}
+                          />
+                        </div>
+                      )}
 
                       <button
                         type="submit"

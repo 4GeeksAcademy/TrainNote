@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-
+import cloudinary.uploader
 from api.models import (
     db,
     Workshop,
@@ -1714,10 +1714,14 @@ def create_service_comment(service_id):
         if service.employee_id != current_employee.id:
             return error_response("You do not have permission to comment on this service", 403)
 
-    data = request.get_json() or {}
+    # This route now supports both JSON and FormData.
+    # JSON is useful for old comments without images.
+    # FormData is needed when we upload an image.
+    data = request.form if request.form else (request.get_json(silent=True) or {})
 
-    comment_text = data.get("comment")
+    comment_text = data.get("comment", "").strip()
     comment_type = data.get("comment_type", "note")
+    image = request.files.get("image")
 
     if not comment_text:
         return error_response("comment is required", 400)
@@ -1729,11 +1733,33 @@ def create_service_comment(service_id):
             "allowed_values": COMMENT_TYPES
         }), 400
 
+    image_url = None
+    image_public_id = None
+
+    if image and image.filename:
+        if not image.mimetype.startswith("image/"):
+            return error_response("Only image files are allowed", 400)
+
+        try:
+            upload_result = cloudinary.uploader.upload(
+                image,
+                folder=f"workshop-app/services/{service.id}/comments",
+                resource_type="image"
+            )
+
+            image_url = upload_result.get("secure_url")
+            image_public_id = upload_result.get("public_id")
+
+        except Exception:
+            return error_response("Image upload failed", 500)
+
     comment = ServiceComment(
         service_id=service.id,
         employee_id=current_employee.id,
         comment=comment_text,
-        comment_type=comment_type
+        comment_type=comment_type,
+        image_url=image_url,
+        image_public_id=image_public_id
     )
 
     db.session.add(comment)
@@ -1743,7 +1769,6 @@ def create_service_comment(service_id):
         "message": "Comment created successfully",
         "comment": comment.serialize()
     }), 201
-
 
 ##------------COMMENTS: NOTIFY ADMIN---------------
 

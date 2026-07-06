@@ -17,7 +17,7 @@ const emptyCustomerForm = {
   driving_license: "",
   phone: "",
   email: "",
-  address: ""
+  address: "",
 };
 
 const emptyVehicleForm = {
@@ -32,7 +32,7 @@ const emptyVehicleForm = {
   engine_cc: "",
   color: "",
   mileage: "",
-  first_registration_date: ""
+  first_registration_date: "",
 };
 
 const emptyServiceForm = {
@@ -44,7 +44,7 @@ const emptyServiceForm = {
   status: "pending",
   priority: "normal",
   entry_mileage: "",
-  observations: ""
+  observations: "",
 };
 
 const SERVICE_TYPES = [
@@ -56,7 +56,7 @@ const SERVICE_TYPES = [
   { value: "painting", label: "Painting" },
   { value: "cleaning", label: "Cleaning" },
   { value: "detailing", label: "Detailing" },
-  { value: "other", label: "Other" }
+  { value: "other", label: "Other" },
 ];
 
 const SERVICE_STATUSES = [
@@ -65,14 +65,14 @@ const SERVICE_STATUSES = [
   { value: "waiting_parts", label: "Waiting parts" },
   { value: "in_repair", label: "In repair" },
   { value: "ready_to_deliver", label: "Ready to deliver" },
-  { value: "delivered", label: "Delivered" }
+  { value: "delivered", label: "Delivered" },
 ];
 
 const SERVICE_PRIORITIES = [
   { value: "low", label: "Low" },
   { value: "normal", label: "Normal" },
   { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" }
+  { value: "urgent", label: "Urgent" },
 ];
 
 const FUEL_TYPES = [
@@ -81,7 +81,7 @@ const FUEL_TYPES = [
   { value: "hybrid", label: "Hybrid" },
   { value: "plug_in_hybrid", label: "Plug-in hybrid" },
   { value: "electric", label: "Electric" },
-  { value: "lpg", label: "LPG" }
+  { value: "lpg", label: "LPG" },
 ];
 
 function getAuthHeaders() {
@@ -89,7 +89,7 @@ function getAuthHeaders() {
 
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   };
 }
 
@@ -98,7 +98,9 @@ function buildUrl(path) {
 }
 
 function getCustomerLabel(customer) {
-  const fullName = `${customer.first_name || ""} ${customer.last_name || ""}`.trim();
+  const fullName = `${customer.first_name || ""} ${
+    customer.last_name || ""
+  }`.trim();
 
   return fullName || "Customer";
 }
@@ -111,7 +113,9 @@ function getVehicleName(vehicle) {
 }
 
 function getMechanicLabel(mechanic) {
-  const fullName = `${mechanic.first_name || ""} ${mechanic.last_name || ""}`.trim();
+  const fullName = `${mechanic.first_name || ""} ${
+    mechanic.last_name || ""
+  }`.trim();
   const email = mechanic.email ? ` · ${mechanic.email}` : "";
 
   return `${fullName || "Mechanic"}${email}`;
@@ -153,16 +157,16 @@ export function ServiceForm({ onServiceCreated }) {
         await Promise.all([
           fetch(buildUrl("/customers"), {
             method: "GET",
-            headers: getAuthHeaders()
+            headers: getAuthHeaders(),
           }),
           fetch(buildUrl("/vehicles"), {
             method: "GET",
-            headers: getAuthHeaders()
+            headers: getAuthHeaders(),
           }),
           fetch(buildUrl("/mechanics"), {
             method: "GET",
-            headers: getAuthHeaders()
-          })
+            headers: getAuthHeaders(),
+          }),
         ]);
 
       const customersData = await customersResponse.json();
@@ -218,7 +222,7 @@ export function ServiceForm({ onServiceCreated }) {
 
     setCustomerForm((currentData) => ({
       ...currentData,
-      [name]: value
+      [name]: value,
     }));
 
     setError("");
@@ -230,7 +234,7 @@ export function ServiceForm({ onServiceCreated }) {
 
     setVehicleForm((currentData) => ({
       ...currentData,
-      [name]: value
+      [name]: value,
     }));
 
     setError("");
@@ -242,7 +246,7 @@ export function ServiceForm({ onServiceCreated }) {
 
     setFormData((currentData) => ({
       ...currentData,
-      [name]: value
+      [name]: value,
     }));
 
     setError("");
@@ -261,7 +265,7 @@ export function ServiceForm({ onServiceCreated }) {
     setFormData((currentData) => ({
       ...currentData,
       vehicle_id: "",
-      entry_mileage: ""
+      entry_mileage: "",
     }));
 
     setError("");
@@ -279,7 +283,7 @@ export function ServiceForm({ onServiceCreated }) {
     setFormData((currentData) => ({
       ...currentData,
       vehicle_id: vehicle ? String(vehicle.id) : "",
-      entry_mileage: vehicle?.mileage ? String(vehicle.mileage) : ""
+      entry_mileage: vehicle?.mileage ? String(vehicle.mileage) : "",
     }));
 
     setError("");
@@ -357,22 +361,20 @@ export function ServiceForm({ onServiceCreated }) {
         driving_license: customerForm.driving_license.trim(),
         phone: customerForm.phone.trim(),
         email: customerForm.email.trim() || null,
-        address: customerForm.address.trim() || null
+        address: customerForm.address.trim() || null,
       };
 
       const response = await fetch(buildUrl("/customers"), {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-            data.message ||
-            "Could not create customer."
+          data.error || data.message || "Could not create customer."
         );
       }
 
@@ -385,7 +387,7 @@ export function ServiceForm({ onServiceCreated }) {
       setFormData((currentData) => ({
         ...currentData,
         vehicle_id: "",
-        entry_mileage: ""
+        entry_mileage: "",
       }));
 
       setCustomerForm(emptyCustomerForm);
@@ -434,22 +436,20 @@ export function ServiceForm({ onServiceCreated }) {
         engine_cc: vehicleForm.engine_cc ? Number(vehicleForm.engine_cc) : null,
         color: vehicleForm.color.trim() || null,
         mileage: vehicleForm.mileage ? Number(vehicleForm.mileage) : 0,
-        first_registration_date: vehicleForm.first_registration_date || null
+        first_registration_date: vehicleForm.first_registration_date || null,
       };
 
       const response = await fetch(buildUrl("/vehicles"), {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-            data.message ||
-            "Could not create vehicle."
+          data.error || data.message || "Could not create vehicle."
         );
       }
 
@@ -463,7 +463,7 @@ export function ServiceForm({ onServiceCreated }) {
         vehicle_id: String(newVehicle.id),
         entry_mileage: newVehicle.mileage
           ? String(newVehicle.mileage)
-          : currentData.entry_mileage
+          : currentData.entry_mileage,
       }));
 
       setVehicleForm(emptyVehicleForm);
@@ -519,22 +519,20 @@ export function ServiceForm({ onServiceCreated }) {
         entry_mileage: formData.entry_mileage
           ? Number(formData.entry_mileage)
           : null,
-        observations: formData.observations.trim() || null
+        observations: formData.observations.trim() || null,
       };
 
       const response = await fetch(buildUrl("/services"), {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-            data.message ||
-            "Could not create service ticket."
+          data.error || data.message || "Could not create service ticket."
         );
       }
 
@@ -659,7 +657,7 @@ export function ServiceForm({ onServiceCreated }) {
             setFormData((currentData) => ({
               ...currentData,
               vehicle_id: "",
-              entry_mileage: ""
+              entry_mileage: "",
             }));
           }}
           onBack={() => setStep(1)}
