@@ -1,81 +1,78 @@
-# Plantilla de WebApp con React JS y Flask API
+# TrainNote
 
-Construye aplicaciones web usando React.js para el front end y python/flask para tu API backend.
+Aplicación web para registrar entrenamientos, alimentación, peso corporal y consultar el progreso fitness de una persona. También permite generar planes personalizados de entrenamiento o nutrición mediante inteligencia artificial.
 
-- La documentación se puede encontrar aquí: https://4geeks.com/docs/start/react-flask-template
-- Aquí hay un video sobre [cómo usar esta plantilla](https://www.youtube.com/watch?v=qBz6Ddd2m38)
-- Integrado con Pipenv para la gestión de paquetes.
-- Despliegue rápido a Render [en solo unos pocos pasos aquí](https://4geeks.com/es/docs/start/despliega-con-render-com).
-- Uso del archivo .env.
-- Integración de SQLAlchemy para la abstracción de bases de datos.
+## Descripción
 
-### 1) Instalación:
+TrainNote es una plataforma donde los usuarios pueden crear una cuenta y gestionar su información fitness desde un solo lugar.
 
-> Si usas Github Codespaces (recomendado) o Gitpod, esta plantilla ya vendrá con Python, Node y la base de datos Posgres instalados. Si estás trabajando localmente, asegúrate de instalar Python 3.10, Node.
+Los usuarios pueden registrar sus entrenamientos diarios, incluyendo ejercicios, series, repeticiones, peso utilizado y duración.
 
-Se recomienda instalar el backend primero, asegúrate de tener Python 3.10, Pipenv y un motor de base de datos (se recomienda Posgres).
+También pueden registrar sus comidas, calorías, proteínas, carbohidratos y grasas, además de llevar un control de su peso corporal.
 
-1. Instala los paquetes de python: `$ pipenv install`
-2. Crea un archivo .env basado en el .env.example: `$ cp .env.example .env`
-3. Instala tu motor de base de datos y crea tu base de datos, dependiendo de tu base de datos, debes crear una variable DATABASE_URL con uno de los valores posibles, asegúrate de reemplazar los valores con la información de tu base de datos:
+La aplicación utiliza los datos registrados para mostrar el progreso del usuario mediante estadísticas y gráficos.
 
-| Motor     | DATABASE_URL                                        |
-| --------- | --------------------------------------------------- |
-| SQLite    | sqlite:////test.db                                  |
-| MySQL     | mysql://username:password@localhost:port/example    |
-| Postgres  | postgres://username:password@localhost:5432/example |
+TrainNote también permite generar planes personalizados con inteligencia artificial. El usuario puede seleccionar entre un plan de entrenamiento o un plan de nutrición y completar los datos necesarios para obtener una recomendación adaptada a sus objetivos.
 
-4. Migra las migraciones: `$ pipenv run migrate` (omite si no has hecho cambios en los modelos en `./src/api/models.py`)
-5. Ejecuta las migraciones: `$ pipenv run upgrade`
-6. Ejecuta la aplicación: `$ pipenv run start`
+## Funcionalidades
 
-> Nota: Los usuarios de Codespaces pueden conectarse a psql escribiendo: `psql -h localhost -U gitpod example`
+- Registro de usuarios.
+- Inicio de sesión.
+- Autenticación mediante JWT.
+- Recuperación de contraseña.
+- Consulta y actualización del perfil.
+- Registro de entrenamientos.
+- Registro de ejercicios, series, repeticiones y peso utilizado.
+- Registro de comidas.
+- Registro del peso corporal.
+- Consulta del progreso.
+- Gráficos de evolución del peso.
+- Consulta del historial de registros.
+- Generación de planes de entrenamiento con inteligencia artificial.
+- Generación de planes de nutrición con inteligencia artificial.
 
-### Deshacer una migración
+## Tecnologías utilizadas
 
-También puedes deshacer una migración ejecutando
+### Frontend
 
-```sh
-$ pipenv run downgrade
+### Backend
+
+### Base de datos
+
+## Instalación
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/4GeeksAcademy/TrainNote
+cd TrainNote
 ```
 
-### Población de la tabla de usuarios en el backend
+### 2. Instalar dependencias del backend
 
-Para insertar usuarios de prueba en la base de datos, ejecuta el siguiente comando:
 
-```sh
-$ flask insert-test-users 5
+### 3. Instalar dependencias del frontend
+
+```bash
+npm install
+```
+### 4. Configurar variables de entorno
+
+## Ejecutar el proyecto
+
+Backend:
+
+```bash
+pipenv run start
 ```
 
-Y verás el siguiente mensaje:
+Frontend:
 
-```
-    Creating test users
-    test_user1@test.com created.
-    test_user2@test.com created.
-    test_user3@test.com created.
-    test_user4@test.com created.
-    test_user5@test.com created.
-    Users created successfully!
+```bash
+npm run start
 ```
 
-### **Nota importante para la base de datos y los datos dentro de ella**
 
-Cada entorno de Github Codespace tendrá **su propia base de datos**, por lo que si estás trabajando con más personas, cada uno tendrá una base de datos diferente y diferentes registros dentro de ella. Estos datos **se perderán**, así que no pases demasiado tiempo creando registros manualmente para pruebas, en su lugar, puedes automatizar la adición de registros a tu base de datos editando el archivo ```commands.py``` dentro de la carpeta ```/src/api```. Edita la línea 32 de la función ```insert_test_data``` para insertar los datos según tu modelo (usa la función ```insert_test_users``` anterior como ejemplo). Luego, todo lo que necesitas hacer es ejecutar ```pipenv run insert-test-data```.
+### 4. Configurar variables de entorno
 
-### Instalación manual del Front-End:
-
--   Asegúrate de estar usando la versión 20 de node y de que ya hayas instalado y ejecutado correctamente el backend.
-
-1. Instala los paquetes: `$ npm install`
-2. ¡Empieza a codificar! inicia el servidor de desarrollo de webpack `$ npm run start`
-
-## ¡Publica tu sitio web!
-
-Esta plantilla está 100% lista para desplegarse con Render.com y Heroku en cuestión de minutos. Por favor, lee la [documentación oficial al respecto](https://4geeks.com/docs/start/deploy-to-render-com).
-
-### Contribuyentes
-
-Esta plantilla fue construida como parte del [Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) de 4Geeks Academy por [Alejandro Sanchez](https://twitter.com/alesanchezr) y muchos otros contribuyentes. Descubre más sobre nuestro [Curso de Desarrollador Full Stack](https://4geeksacademy.com/us/coding-bootcamps/part-time-full-stack-developer) y [Bootcamp de Ciencia de Datos](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning).
-
-Puedes encontrar otras plantillas y recursos como este en la [página de github de la escuela](https://github.com/4geeksacademy/).
+Crear un archivo `.env`:
