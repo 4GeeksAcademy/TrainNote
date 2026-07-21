@@ -1,12 +1,13 @@
-import os
-import random
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import json
+import os
+import random
+import re
 import smtplib
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
-from werkzeug.security import check_password_hash, generate_password_hash
+import time
+
 from api.models import (
     CodigoRecuperacion,
     DetalleEntrenamiento,
@@ -15,18 +16,87 @@ from api.models import (
     EstatusEnum,
     Nutricion,
     Peso,
+    PlanIA,
+    TipoPlanEnum,
     Usuario,
     db,
 )
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import (
+    create_access_token,
+    get_jwt,
+    get_jwt_identity,
+    jwt_required,
+)
+from google import genai
+from google.genai import types
+from werkzeug.security import check_password_hash, generate_password_hash
+
 api_bp = Blueprint("api_bp", __name__)
 
 jwt_blacklist = set()
+api_key = os.getenv("GEMINI_API_KEY")
+
+client = genai.Client(api_key=api_key)
 
 # ==========================================
-# UTILIDAD: VALIDA QUE EL PERFIL ESTE COMPLETO
+# UTILIDADES CONEXION CON GEMINIS
+# ==========================================
+MODELOS_FALLBACK = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'] 
+MAX_REINTENTOS = 1
+
+
+def extraer_retry_delay(mensaje, default=20):
+  match = re.search(r"retryDelay['\"]?:\s*['\"]?(\d+)", mensaje)
+  if match:
+    return int(match.group(1))
+  return default
+
+
+def generar_con_reintentos(prompt_texto):
+  ultimo_error = None
+
+  for modelo in MODELOS_FALLBACK:
+    for intento in range(MAX_REINTENTOS):
+      try:
+        response = client.models.generate_content(
+            model=modelo,
+            contents=prompt_texto,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.3,
+                max_output_tokens=4096,
+            ),
+        )
+        return response, modelo
+      except Exception as e:
+        mensaje = str(e)
+        ultimo_error = e
+        es_429 = "429" in mensaje or "RESOURCE_EXHAUSTED" in mensaje
+        es_404 = "404" in mensaje or "NOT_FOUND" in mensaje
+
+        if es_404:
+          break
+
+        if not es_429:
+          raise
+
+        es_limite_diario = "PerDay" in mensaje or "RPD" in mensaje
+
+        if es_limite_diario or intento == MAX_REINTENTOS - 1:
+          break
+
+        espera = min(extraer_retry_delay(mensaje), 10) + random.uniform(0, 1)
+        time.sleep(espera)
+
+  raise ultimo_error
+
+# ==========================================
+# UTILIDADES CONFIRMACION DE PERFIL COMPLETADO
 # ==========================================
 def perfil_esta_completado(user):
-  
+  if not user:
+    return False
   if not user.altura or user.altura <= 0:
     return False
   if not user.objetivo or user.objetivo == "General":
@@ -34,12 +104,37 @@ def perfil_esta_completado(user):
   if not user.peso_deseado or user.peso_deseado <= 0:
     return False
   return True
+
 # ==========================================
-# UTILIDAD: ENVIAR CORREO (SMTP GMAIL)
+# UTILIDADES VALIDACION DE FECHAS
+# ==========================================
+def parsear_rango_fechas(request_args):
+  """Valida y extrae las fechas 'desde' y 'hasta' enviadas por query string."""
+  desde_str = request_args.get("desde")
+  hasta_str = request_args.get("hasta")
+
+  fecha_desde = None
+  fecha_hasta = None
+
+  try:
+    if desde_str:
+      fecha_desde = datetime.strptime(desde_str, "%Y-%m-%d").date()
+    if hasta_str:
+      fecha_hasta = datetime.strptime(hasta_str, "%Y-%m-%d").date()
+  except ValueError:
+    return None, None, "El formato de fecha debe ser YYYY-MM-DD."
+
+  return fecha_desde, fecha_hasta, None
+
+# ==========================================
+# UTILIDADES ENVIO DE CORREO CON GMAIL
 # ==========================================
 def enviar_correo_smtp(destinatario, codigo):
-  remitente = os.getenv("MAIL_USERNAME", "Luistimaure1204@gmail.com")
-  password_app = os.getenv("MAIL_PASSWORD", "lrjh zcif ylza ypza")
+  remitente = os.getenv("MAIL_USERNAME")
+  password_app = os.getenv("MAIL_PASSWORD")
+
+  if not remitente or not password_app:
+    return False
 
   mensaje = MIMEMultipart()
   mensaje["From"] = remitente
@@ -50,7 +145,7 @@ def enviar_correo_smtp(destinatario, codigo):
     Hola:
     Has solicitado restablecer tu contraseña en TrainNote.
     Tu código de seguridad de 6 dígitos es: {codigo}
-    Este código expirará en 15 minutos. Si realizaste esta solicitud ignora este mensaje.
+    Este código expirará en 15 minutos. Si no realizaste esta solicitud, ignora este mensaje.
     """
   mensaje.attach(MIMEText(cuerpo, "plain"))
 
@@ -61,26 +156,27 @@ def enviar_correo_smtp(destinatario, codigo):
     servidor.sendmail(remitente, destinatario, mensaje.as_string())
     servidor.quit()
     return True
-  except Exception as e:
-    print(f"Error detallado al enviar correo: {e}")
+  except Exception:
     return False
 
 
 # ==========================================
-# ENDPOINT DE REGISTRO
+# ENDPOINTS DE AUTENTICACIÓN
 # ==========================================
 @api_bp.route("/api/register", methods=["POST"])
 def register():
   data = request.get_json() or {}
 
   nombre = data.get("nombre")
-  correo = data.get("email") 
+  correo = data.get("email")
   password = data.get("password")
 
   if not nombre or not correo or not password:
     return (
         jsonify({
-            "error": "Todos los campos (nombre, email, contraseña) son obligatorios."
+            "error": (
+                "Todos los campos (nombre, email, contraseña) son obligatorios."
+            )
         }),
         400,
     )
@@ -103,23 +199,28 @@ def register():
     db.session.commit()
     return (
         jsonify({
-            "message": "Usuario creado exitosamente",
+            "message": "Usuario creado exitosamente.",
             "user": nuevo_usuario.serialize(),
         }),
         201,
     )
-  except Exception as e:
+  except Exception:
     db.session.rollback()
-    return jsonify({"error": str(e)}), 500
+    return (
+        jsonify({
+            "error": (
+                "Ocurrió un inconveniente al procesar el registro. Intente de"
+                " nuevo."
+            )
+        }),
+        500,
+    )
 
 
-# ==========================================
-# ENDPOINTS DE LOGIN Y LOGOUT
-# ==========================================
 @api_bp.route("/api/login", methods=["POST"])
 def login():
   data = request.get_json() or {}
-  correo = data.get("email") 
+  correo = data.get("email")
   password = data.get("password")
 
   if not correo or not password:
@@ -128,20 +229,20 @@ def login():
   user = Usuario.query.filter_by(correo=correo).first()
   if not user or not check_password_hash(user.password, password):
     return (
-        jsonify({"error": "Las credenciales no coinciden con las registradas."}),
+        jsonify(
+            {"error": "Las credenciales no coinciden con las registradas."}
+        ),
         401,
     )
 
   access_token = create_access_token(identity=str(user.usuario_id))
 
   return (
-      jsonify(
-          {
-              "message": "Inicio de sesión exitoso",
-              "access_token": access_token,
-              "user": user.serialize(),
-          }
-      ),
+      jsonify({
+          "message": "Inicio de sesión exitoso.",
+          "access_token": access_token,
+          "user": user.serialize(),
+      }),
       200,
   )
 
@@ -160,7 +261,7 @@ def logout():
 @api_bp.route("/api/request-code", methods=["POST"])
 def request_code():
   data = request.get_json() or {}
-  correo = data.get("email") 
+  correo = data.get("email")
 
   if not correo:
     return jsonify({"error": "El correo es obligatorio."}), 400
@@ -194,12 +295,13 @@ def request_code():
   db.session.commit()
 
   if not enviar_correo_smtp(correo, codigo_aleatorio):
-    return jsonify({"error": "No se pudo enviar el correo de recuperación."}), 500
+    return (
+        jsonify({"error": "No se pudo enviar el correo de recuperación."}),
+        500,
+    )
 
   return (
-      jsonify({
-          "message": "Código de recuperación enviado a tu correo"
-      }),
+      jsonify({"message": "Código de recuperación enviado a tu correo."}),
       200,
   )
 
@@ -207,7 +309,7 @@ def request_code():
 @api_bp.route("/api/verify-code", methods=["POST"])
 def verify_code():
   data = request.get_json() or {}
-  correo = data.get("email") 
+  correo = data.get("email")
   codigo_ingresado = data.get("codigo")
 
   if not correo or not codigo_ingresado:
@@ -237,7 +339,7 @@ def verify_code():
 @api_bp.route("/api/reset", methods=["POST"])
 def reset_password():
   data = request.get_json() or {}
-  correo = data.get("email") 
+  correo = data.get("email")
   codigo_ingresado = data.get("codigo")
   nuevo_password = data.get("password") or data.get("nuevo_password")
 
@@ -271,17 +373,23 @@ def reset_password():
   try:
     db.session.commit()
     return jsonify({"message": "Contraseña actualizada exitosamente."}), 200
-  except Exception as e:
+  except Exception:
     db.session.rollback()
-    return jsonify({"error": str(e)}), 500
-  
+    return (
+        jsonify(
+            {"error": "No se pudo reestablecer la contraseña. Intente luego."}
+        ),
+        500,
+    )
+
+
 # ==========================================
-#  ENDPOINTS DE PERFIL 
+# ENDPOINTS DE PERFIL
 # ==========================================
 @api_bp.route("/api/profile", methods=["GET"])
 @jwt_required()
 def get_profile():
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   user = Usuario.query.get(current_user_id)
   if not user:
     return jsonify({"error": "Usuario no encontrado."}), 404
@@ -291,17 +399,18 @@ def get_profile():
 @api_bp.route("/api/profile", methods=["PUT"])
 @jwt_required()
 def update_profile():
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   user = Usuario.query.get(current_user_id)
   if not user:
     return jsonify({"error": "Usuario no encontrado."}), 404
 
   data = request.get_json() or {}
 
-  if "email" in data:
+  if "email" in data or "correo" in data:
     new_email = data.get("email") or data.get("correo")
     if new_email and new_email != user.correo:
       return jsonify({"error": "El correo no se puede actualizar."}), 400
+
   if "nombre" in data:
     user.nombre = data["nombre"]
   if "objetivo" in data:
@@ -317,19 +426,23 @@ def update_profile():
     db.session.commit()
     return (
         jsonify({
-            "message": "Datos personales actualizados exitosamente",
+            "message": "Datos personales actualizados exitosamente.",
             "user": user.serialize(),
         }),
         200,
     )
-  except Exception as e:
+  except Exception:
     db.session.rollback()
-    return jsonify({"error": str(e)}), 500
+    return (
+        jsonify({"error": "No se pudo actualizar el perfil correctamente."}),
+        500,
+    )
+
 
 @api_bp.route("/api/password", methods=["PUT"])
 @jwt_required()
 def update_password():
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   user = Usuario.query.get(current_user_id)
   if not user:
     return jsonify({"error": "Usuario no encontrado."}), 404
@@ -351,7 +464,6 @@ def update_password():
   if not check_password_hash(user.password, current_password):
     return jsonify({"error": "La contraseña actual es incorrecta."}), 400
 
-
   if len(new_password) < 8:
     return (
         jsonify({
@@ -365,41 +477,61 @@ def update_password():
   try:
     db.session.commit()
     return jsonify({"message": "Contraseña actualizada exitosamente."}), 200
-  except Exception as e:
+  except Exception:
     db.session.rollback()
-    return jsonify({"error": str(e)}), 500
-  
-# ==========================================
-# ENDPOINTS DE ENTRENAMIENTOS 
-# ==========================================
+    return (
+        jsonify({"error": "No se pudo cambiar la contraseña. Intente luego."}),
+        500,
+    )
 
+
+# ==========================================
+# ENDPOINTS DE ENTRENAMIENTOS
+# ==========================================
 @api_bp.route("/api/workouts", methods=["GET"])
 @jwt_required()
 def get_workouts():
-  current_user_id = get_jwt_identity()
-  workouts = Entrenamiento.query.filter_by(usuario_id=current_user_id).all()
+  current_user_id = int(get_jwt_identity())
+
+  fecha_desde, fecha_hasta, error_fecha = parsear_rango_fechas(request.args)
+  if error_fecha:
+    return jsonify({"error": error_fecha}), 400
+
+  query = Entrenamiento.query.filter_by(usuario_id=current_user_id)
+
+  if fecha_desde:
+    query = query.filter(Entrenamiento.fecha >= fecha_desde)
+  if fecha_hasta:
+    query = query.filter(Entrenamiento.fecha <= fecha_hasta)
+
+  workouts = query.order_by(Entrenamiento.fecha.desc()).all()
+
   resultado = []
   for w in workouts:
-      detalles = DetalleEntrenamiento.query.filter_by(entrenamiento_id=w.entrenamiento_id).all()
-      w_dict = w.serialize()
-      w_dict["ejercicios"] = []
-      for d in detalles:
-          ej = Ejercicio.query.get(d.ejercicio_id)
-          w_dict["ejercicios"].append({
-              "nombre_ejercicio": ej.nombre if ej else "",
-              "series": d.serie,
-              "repeticiones": d.repeticion,
-              "peso_kg": d.peso_ejercicio
-          })
-      resultado.append(w_dict)
+    detalles = DetalleEntrenamiento.query.filter_by(
+        entrenamiento_id=w.entrenamiento_id
+    ).all()
+    w_dict = w.serialize()
+    w_dict["ejercicios"] = []
+    for d in detalles:
+      ej = Ejercicio.query.get(d.ejercicio_id)
+      w_dict["ejercicios"].append({
+          "nombre_ejercicio": ej.nombre if ej else "",
+          "series": d.serie,
+          "repeticiones": d.repeticion,
+          "peso_kg": d.peso_ejercicio,
+      })
+    resultado.append(w_dict)
+
   return jsonify(resultado), 200
 
 
 @api_bp.route("/api/workouts", methods=["POST"])
 @jwt_required()
 def create_workout():
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   user = Usuario.query.get(current_user_id)
+
   if not perfil_esta_completado(user):
     return (
         jsonify({
@@ -409,6 +541,7 @@ def create_workout():
         }),
         400,
     )
+
   data = request.get_json() or {}
 
   fecha_str = data.get("fecha")
@@ -417,7 +550,14 @@ def create_workout():
   ejercicios = data.get("ejercicios", [])
 
   if not fecha_str or not duracion or not ejercicios:
-    return jsonify({"error": "Fecha, duración y al menos un ejercicio son obligatorios."}), 400
+    return (
+        jsonify({
+            "error": (
+                "Fecha, duración y al menos un ejercicio son obligatorios."
+            )
+        }),
+        400,
+    )
 
   try:
     duracion_int = int(duracion)
@@ -429,16 +569,19 @@ def create_workout():
   try:
     fecha_dt = datetime.strptime(fecha_str, "%Y-%m-%d").date()
   except Exception:
-    return jsonify({"error": "Formato de fecha inválido (Use YYYY-MM-DD)."}), 400
+    return (
+        jsonify({"error": "Formato de fecha inválido (Utiliza YYYY-MM-DD)."}),
+        400,
+    )
 
   nuevo_entrenamiento = Entrenamiento(
       usuario_id=current_user_id,
       fecha=fecha_dt,
       duracion=duracion_int,
-      nota=notas
+      nota=notas,
   )
   db.session.add(nuevo_entrenamiento)
-  db.session.flush() 
+  db.session.flush()
 
   for item in ejercicios:
     nombre_ej = item.get("nombre_ejercicio") or item.get("nombre")
@@ -448,7 +591,14 @@ def create_workout():
 
     if not nombre_ej or not sets or not reps:
       db.session.rollback()
-      return jsonify({"error": "Cada ejercicio requiere nombre, series y repeticiones."}), 400
+      return (
+          jsonify({
+              "error": (
+                  "Cada ejercicio requiere nombre, series y repeticiones."
+              )
+          }),
+          400,
+      )
 
     try:
       sets_int = int(sets)
@@ -458,7 +608,14 @@ def create_workout():
         raise ValueError()
     except ValueError:
       db.session.rollback()
-      return jsonify({"error": "Series y repeticiones deben ser números positivos."}), 400
+      return (
+          jsonify({
+              "error": (
+                  "Series y repeticiones deben ser números enteros positivos."
+              )
+          }),
+          400,
+      )
 
     ejercicio_obj = Ejercicio.query.filter_by(nombre=nombre_ej).first()
     if not ejercicio_obj:
@@ -471,54 +628,89 @@ def create_workout():
         ejercicio_id=ejercicio_obj.ejercicio_id,
         serie=sets_int,
         repeticion=reps_int,
-        peso_ejercicio=peso_int
+        peso_ejercicio=peso_int,
     )
     db.session.add(detalle)
 
-  db.session.commit()
-  return jsonify({"message": "Entrenamiento registrado exitosamente", "id": nuevo_entrenamiento.entrenamiento_id}), 201
+  try:
+    db.session.commit()
+    return (
+        jsonify({
+            "message": "Entrenamiento registrado exitosamente.",
+            "id": nuevo_entrenamiento.entrenamiento_id,
+        }),
+        201,
+    )
+  except Exception:
+    db.session.rollback()
+    return (
+        jsonify({"error": "No se pudo registrar el entrenamiento."}),
+        500,
+    )
 
 
 @api_bp.route("/api/workouts/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_workout(id):
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   workout = Entrenamiento.query.get(id)
-  if not workout or workout.usuario_id != int(current_user_id):
-    return jsonify({"error": "Entrenamiento no encontrado o no autorizado."}), 404
 
-  DetalleEntrenamiento.query.filter_by(entrenamiento_id=id).delete()
-  db.session.delete(workout)
-  db.session.commit()
-  return jsonify({"message": "Entrenamiento eliminado exitosamente."}), 200
+  if not workout or workout.usuario_id != current_user_id:
+    return (
+        jsonify({"error": "Entrenamiento no encontrado o no autorizado."}),
+        404,
+    )
+
+  try:
+    DetalleEntrenamiento.query.filter_by(entrenamiento_id=id).delete()
+    db.session.delete(workout)
+    db.session.commit()
+    return jsonify({"message": "Entrenamiento eliminado exitosamente."}), 200
+  except Exception:
+    db.session.rollback()
+    return (
+        jsonify({"error": "Ocurrió un error al eliminar el entrenamiento."}),
+        500,
+    )
 
 
 # ==========================================
 # ENDPOINTS DE NUTRICIÓN
 # ==========================================
-
 @api_bp.route("/api/nutrition", methods=["GET"])
 @jwt_required()
 def get_nutrition():
-  current_user_id = get_jwt_identity()
-  items = Nutricion.query.filter_by(usuario_id=current_user_id).all()
+  current_user_id = int(get_jwt_identity())
+
+  fecha_desde, fecha_hasta, error_fecha = parsear_rango_fechas(request.args)
+  if error_fecha:
+    return jsonify({"error": error_fecha}), 400
+
+  query = Nutricion.query.filter_by(usuario_id=current_user_id)
+
+  if fecha_desde:
+    query = query.filter(Nutricion.fecha >= fecha_desde)
+  if fecha_hasta:
+    query = query.filter(Nutricion.fecha <= fecha_hasta)
+
+  items = query.order_by(Nutricion.fecha.desc()).all()
   return jsonify([n.serialize() for n in items]), 200
 
 
 @api_bp.route("/api/nutrition", methods=["POST"])
 @jwt_required()
 def create_nutrition():
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   user = Usuario.query.get(current_user_id)
+
   if not perfil_esta_completado(user):
     return (
-        jsonify({
-            "error": (
-                "Debes completar tu perfil antes de registrar comidas."
-            )
-        }),
+        jsonify(
+            {"error": "Debes completar tu perfil antes de registrar comidas."}
+        ),
         400,
     )
+
   data = request.get_json() or {}
 
   fecha_str = data.get("fecha")
@@ -530,12 +722,18 @@ def create_nutrition():
   grasas = data.get("grasas_g") or data.get("grasa", 0)
 
   if not fecha_str or not nombre or not tipo:
-    return jsonify({"error": "Fecha, nombre y tipo de comida son obligatorios."}), 400
+    return (
+        jsonify({"error": "Fecha, nombre y tipo de comida son obligatorios."}),
+        400,
+    )
 
   try:
     fecha_dt = datetime.strptime(fecha_str, "%Y-%m-%d").date()
   except Exception:
-    return jsonify({"error": "Formato de fecha inválido (Use YYYY-MM-DD)."}), 400
+    return (
+        jsonify({"error": "Formato de fecha inválido (Utiliza YYYY-MM-DD)."}),
+        400,
+    )
 
   nueva_comida = Nutricion(
       usuario_id=current_user_id,
@@ -545,55 +743,82 @@ def create_nutrition():
       proteina=proteinas,
       caloria=calorias,
       grasa=grasas,
-      carbohidrato=carbos
+      carbohidrato=carbos,
   )
 
-  db.session.add(nueva_comida)
-  db.session.commit()
-  return jsonify({"message": "Registro de nutrición creado", "id": nueva_comida.nutricion_id}), 201
+  try:
+    db.session.add(nueva_comida)
+    db.session.commit()
+    return (
+        jsonify({
+            "message": "Registro de nutrición creado exitosamente.",
+            "id": nueva_comida.nutricion_id,
+        }),
+        201,
+    )
+  except Exception:
+    db.session.rollback()
+    return (
+        jsonify({"error": "No se pudo guardar la información nutricional."}),
+        500,
+    )
 
 
 @api_bp.route("/api/nutrition/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_nutrition(id):
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   item = Nutricion.query.get(id)
-  if not item or item.usuario_id != int(current_user_id):
+
+  if not item or item.usuario_id != current_user_id:
     return jsonify({"error": "Registro no encontrado o no autorizado."}), 404
 
-  db.session.delete(item)
-  db.session.commit()
-  return jsonify({"message": "Registro de nutrición eliminado."}), 200
+  try:
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({"message": "Registro de nutrición eliminado."}), 200
+  except Exception:
+    db.session.rollback()
+    return jsonify({"error": "No se pudo eliminar el registro."}), 500
 
 
 # ==========================================
-# ENDPOINTS DE PESO CORPORAL 
+# ENDPOINTS DE PESO CORPORAL
 # ==========================================
-
 @api_bp.route("/api/weights", methods=["GET"])
 @jwt_required()
 def get_weights():
-  current_user_id = get_jwt_identity()
-  pesos = Peso.query.filter_by(usuario_id=current_user_id).all()
+  current_user_id = int(get_jwt_identity())
+
+  fecha_desde, fecha_hasta, error_fecha = parsear_rango_fechas(request.args)
+  if error_fecha:
+    return jsonify({"error": error_fecha}), 400
+
+  query = Peso.query.filter_by(usuario_id=current_user_id)
+
+  if fecha_desde:
+    query = query.filter(Peso.fecha >= fecha_desde)
+  if fecha_hasta:
+    query = query.filter(Peso.fecha <= fecha_hasta)
+
+  pesos = query.order_by(Peso.fecha.desc()).all()
   return jsonify([p.serialize() for p in pesos]), 200
 
 
 @api_bp.route("/api/weights", methods=["POST"])
 @jwt_required()
 def create_weight():
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   user = Usuario.query.get(current_user_id)
 
-  # Validación de perfil completado
   if not perfil_esta_completado(user):
     return (
-        jsonify({
-            "error": (
-                "Debes completar tu perfil antes de registrar tu peso."
-            )
-        }),
+        jsonify(
+            {"error": "Debes completar tu perfil antes de registrar tu peso."}
+        ),
         400,
     )
+
   data = request.get_json() or {}
 
   fecha_str = data.get("fecha")
@@ -612,32 +837,352 @@ def create_weight():
   try:
     fecha_dt = datetime.strptime(fecha_str, "%Y-%m-%d").date()
   except Exception:
-    return jsonify({"error": "Formato de fecha inválido (Use YYYY-MM-DD)."}), 400
+    return (
+        jsonify({"error": "Formato de fecha inválido (Utiliza YYYY-MM-DD)."}),
+        400,
+    )
 
-
-  existente = Peso.query.filter_by(usuario_id=current_user_id, fecha=fecha_dt).first()
+  existente = Peso.query.filter_by(
+      usuario_id=current_user_id, fecha=fecha_dt
+  ).first()
   if existente:
-    return jsonify({"error": "Ya existe un registro de peso para esta fecha."}), 400
+    return (
+        jsonify({"error": "Ya existe un registro de peso para esta fecha."}),
+        400,
+    )
 
   nuevo_peso = Peso(
-      usuario_id=current_user_id,
-      fecha=fecha_dt,
-      peso_kg=peso_val
+      usuario_id=current_user_id, fecha=fecha_dt, peso_kg=peso_val
   )
-  db.session.add(nuevo_peso)
-  db.session.commit()
 
-  return jsonify({"message": "Peso registrado exitosamente", "id": nuevo_peso.peso_id}), 201
+  try:
+    db.session.add(nuevo_peso)
+    db.session.commit()
+    return (
+        jsonify({
+            "message": "Peso registrado exitosamente.",
+            "id": nuevo_peso.peso_id,
+        }),
+        201,
+    )
+  except Exception:
+    db.session.rollback()
+    return jsonify({"error": "No se pudo guardar el peso."}), 500
 
 
 @api_bp.route("/api/weights/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_weight(id):
-  current_user_id = get_jwt_identity()
+  current_user_id = int(get_jwt_identity())
   peso_reg = Peso.query.get(id)
-  if not peso_reg or peso_reg.usuario_id != int(current_user_id):
-    return jsonify({"error": "Registro de peso no encontrado o no autorizado."}), 404
 
-  db.session.delete(peso_reg)
-  db.session.commit()
-  return jsonify({"message": "Registro de peso eliminado."}), 200
+  if not peso_reg or peso_reg.usuario_id != current_user_id:
+    return (
+        jsonify({"error": "Registro de peso no encontrado o no autorizado."}),
+        404,
+    )
+
+  try:
+    db.session.delete(peso_reg)
+    db.session.commit()
+    return jsonify({"message": "Registro de peso eliminado."}), 200
+  except Exception:
+    db.session.rollback()
+    return jsonify({"error": "No se pudo eliminar el registro."}), 500
+
+
+# ==========================================
+# ENDPOINTS DE PROGRESO
+# ==========================================
+@api_bp.route("/api/progress_summary", methods=["GET"])
+@jwt_required()
+def get_progress_summary():
+  current_user_id = int(get_jwt_identity())
+  user = Usuario.query.get(current_user_id)
+  if not user:
+    return jsonify({"error": "Usuario no encontrado."}), 404
+
+  pesos = (
+      Peso.query.filter_by(usuario_id=current_user_id)
+      .order_by(Peso.fecha.asc())
+      .all()
+  )
+  peso_inicial = float(pesos[0].peso_kg) if pesos else None
+  peso_actual = float(pesos[-1].peso_kg) if pesos else None
+  peso_deseado = float(user.peso_deseado) if user.peso_deseado else None
+
+  cambio_total = None
+  if peso_inicial is not None and peso_actual is not None:
+    cambio_total = round(peso_actual - peso_inicial, 2)
+
+  hoy = date.today()
+  inicio_mes = hoy.replace(day=1)
+  inicio_semana = hoy - timedelta(days=hoy.weekday())
+
+  workouts_mes = Entrenamiento.query.filter(
+      Entrenamiento.usuario_id == current_user_id,
+      Entrenamiento.fecha >= inicio_mes,
+  ).count()
+
+  workouts_semana = Entrenamiento.query.filter(
+      Entrenamiento.usuario_id == current_user_id,
+      Entrenamiento.fecha >= inicio_semana,
+  ).count()
+
+  max_duracion_row = (
+      db.session.query(db.func.max(Entrenamiento.duracion))
+      .filter(Entrenamiento.usuario_id == current_user_id)
+      .scalar()
+  )
+  mejor_duracion_min = max_duracion_row if max_duracion_row else 0
+
+  nutricion_stats = (
+      db.session.query(
+          db.func.avg(Nutricion.caloria), db.func.avg(Nutricion.proteina)
+      )
+      .filter(Nutricion.usuario_id == current_user_id)
+      .first()
+  )
+
+  promedio_calorias = (
+      round(float(nutricion_stats[0]), 2)
+      if nutricion_stats and nutricion_stats[0]
+      else 0
+  )
+  promedio_proteinas = (
+      round(float(nutricion_stats[1]), 2)
+      if nutricion_stats and nutricion_stats[1]
+      else 0
+  )
+
+  return (
+      jsonify({
+          "peso_inicial": peso_inicial,
+          "peso_actual": peso_actual,
+          "peso_deseado": peso_deseado,
+          "cambio_total_kg": cambio_total,
+          "workouts_mes": workouts_mes,
+          "workouts_semana": workouts_semana,
+          "mejor_duracion_minutos": mejor_duracion_min,
+          "promedio_calorias": promedio_calorias,
+          "promedio_proteinas_g": promedio_proteinas,
+      }),
+      200,
+  )
+
+
+@api_bp.route("/api/progress_weight", methods=["GET"])
+@jwt_required()
+def get_progress_weight():
+  current_user_id = int(get_jwt_identity())
+
+  fecha_desde, fecha_hasta, error_fecha = parsear_rango_fechas(request.args)
+  if error_fecha:
+    return jsonify({"error": error_fecha}), 400
+
+  query = Peso.query.filter_by(usuario_id=current_user_id)
+
+  if fecha_desde:
+    query = query.filter(Peso.fecha >= fecha_desde)
+  if fecha_hasta:
+    query = query.filter(Peso.fecha <= fecha_hasta)
+
+  pesos = query.order_by(Peso.fecha.asc()).all()
+
+  grafico = []
+  for idx, p in enumerate(pesos, start=1):
+    grafico.append({
+        "semana": f"Semana {idx}",
+        "fecha": p.fecha.isoformat(),
+        "peso_kg": float(p.peso_kg),
+    })
+
+  return jsonify(grafico), 200
+
+
+# ==========================================
+# ENDPOINTS DE PLAN IA
+# ==========================================
+@api_bp.route("/api/plans", methods=["POST"])
+@jwt_required()
+def create_plan():
+  current_user_id = int(get_jwt_identity())
+  user = Usuario.query.get(current_user_id)
+
+  if not user or not perfil_esta_completado(user):
+    return (
+        jsonify({
+            "error": (
+                "Debes completar tu perfil antes de generar planes"
+                " personalizados."
+            )
+        }),
+        400,
+    )
+
+  data = request.get_json() or {}
+  tipo_plan_input = (data.get("tipo_plan") or "").lower()
+
+  if tipo_plan_input not in [
+      "entrenamiento",
+      "nutricion",
+      "training",
+      "nutrition",
+  ]:
+    return (
+        jsonify({
+            "error": "El tipo de plan debe ser 'entrenamiento' o 'nutricion'."
+        }),
+        400,
+    )
+
+  if tipo_plan_input in ["entrenamiento", "training"]:
+    req_fields = [
+        "nivel",
+        "dias_por_semana",
+        "minutos_sesion",
+        "equipamiento",
+        "enfoque_principal",
+    ]
+    for field in req_fields:
+      if not data.get(field):
+        return (
+            jsonify(
+                {"error": f"El campo {field} es obligatorio para Entrenamiento."}
+            ),
+            400,
+        )
+
+    prompt_texto = f"""
+        Genera un plan de entrenamiento personalizado con los siguientes datos:
+        Objetivo principal: {user.objetivo}
+        Nivel de entrenamiento: {data.get('nivel')}
+        Días disponibles por semana: {data.get('dias_por_semana')}
+        Tiempo disponible por sesión: {data.get('minutos_sesion')} minutos
+        Equipo disponible: {data.get('equipamiento')}
+        Enfoque principal: {data.get('enfoque_principal')}
+        Lesiones o limitaciones: {data.get('lesiones_o_limitaciones', 'Ninguna')}
+
+        Sigue todas las reglas del formato estructurado y devuelve únicamente un JSON válido con la clave "tipo_plan": "training".
+        """
+    enum_tipo = TipoPlanEnum.ENTRENAMIENTO
+
+  else:
+    req_fields = [
+        "edad",
+        "peso_actual_kg",
+        "altura_cm",
+        "nivel_actividad",
+        "comidas_al_dia",
+        "preferencias_dieteticas",
+    ]
+    for field in req_fields:
+      if not data.get(field):
+        return (
+            jsonify(
+                {"error": f"El campo {field} es obligatorio para Nutrición."}
+            ),
+            400,
+        )
+
+    prompt_texto = f"""
+        Genera un plan de nutrición general personalizado con los siguientes datos:
+        Objetivo principal: {user.objetivo}
+        Edad: {data.get('edad')}
+        Sexo biológico: {data.get('sexo_biologico', 'No especificado')}
+        Peso actual: {data.get('peso_actual_kg')} kg
+        Altura: {data.get('altura_cm')} cm
+        Nivel de actividad física: {data.get('nivel_actividad')}
+        Número de comidas por día: {data.get('comidas_al_dia')}
+        Preferencia alimentaria: {data.get('preferencias_dieteticas')}
+        Alergias o restricciones: {data.get('alergias_restricciones', 'Ninguna')}
+        Alimentos excluidos: {data.get('alimentos_excluidos', 'Ninguno')}
+        Peso deseado: {user.peso_deseado} kg
+        Calorías objetivo: {data.get('calorias_objetivo', 'Calcular estimación aproximada')}
+
+        Sigue todas las reglas del formato estructurado y devuelve únicamente un JSON válido con la clave "tipo_plan": "nutrition".
+        """
+    enum_tipo = TipoPlanEnum.NUTRICION
+
+  try:
+    response, modelo_usado = generar_con_reintentos(prompt_texto)
+
+    texto_respuesta = response.text.strip()
+    if texto_respuesta.startswith("```"):
+      texto_respuesta = re.sub(r"^```(json)?", "", texto_respuesta)
+      texto_respuesta = re.sub(r"```$", "", texto_respuesta).strip()
+
+    resultado_json = json.loads(texto_respuesta)
+
+  except Exception as e:
+    print(f" ERROR EN PLAN IA: {e}")
+    return (
+        jsonify({
+            "error": (
+                "No se pudo procesar la solicitud en este momento. Intente de"
+                " nuevo."
+            )
+        }),
+        500,
+    )
+
+  nuevo_plan = PlanIA(
+      usuario_id=current_user_id,
+      fecha=date.today(),
+      tipo_plan=enum_tipo,
+      prompt=prompt_texto,
+      resultado=json.dumps(resultado_json),
+  )
+
+  try:
+    db.session.add(nuevo_plan)
+    db.session.commit()
+    return (
+        jsonify({
+            "message": "Plan generado y guardado exitosamente.",
+            "plan_id": nuevo_plan.plan_id,
+            "resultado": resultado_json,
+        }),
+        201,
+    )
+  except Exception:
+    db.session.rollback()
+    return jsonify({"error": "No se pudo guardar el plan generado."}), 500
+
+
+@api_bp.route("/api/plans", methods=["GET"])
+@jwt_required()
+def get_plans():
+  current_user_id = int(get_jwt_identity())
+
+  fecha_desde, fecha_hasta, error_fecha = parsear_rango_fechas(request.args)
+  if error_fecha:
+    return jsonify({"error": error_fecha}), 400
+
+  query = PlanIA.query.filter_by(usuario_id=current_user_id)
+
+  if fecha_desde:
+    query = query.filter(PlanIA.fecha >= fecha_desde)
+  if fecha_hasta:
+    query = query.filter(PlanIA.fecha <= fecha_hasta)
+
+  planes = query.order_by(PlanIA.fecha.desc()).all()
+  return jsonify([p.serialize() for p in planes]), 200
+
+
+@api_bp.route("/api/plans/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_plan(id):
+  current_user_id = int(get_jwt_identity())
+  plan = PlanIA.query.get(id)
+
+  if not plan or plan.usuario_id != current_user_id:
+    return jsonify({"error": "Plan no encontrado o no autorizado."}), 404
+
+  try:
+    db.session.delete(plan)
+    db.session.commit()
+    return jsonify({"message": "Plan eliminado exitosamente."}), 200
+  except Exception:
+    db.session.rollback()
+    return jsonify({"error": "No se pudo eliminar el plan."}), 500
