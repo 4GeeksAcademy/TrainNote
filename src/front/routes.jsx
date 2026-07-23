@@ -1,30 +1,59 @@
-// Import necessary components and functions from react-router-dom.
+import React from "react";
+import { createHashRouter, createRoutesFromElements, Route, Outlet } from "react-router-dom";
 
-import {
-    createBrowserRouter,
-    createRoutesFromElements,
-    Route,
-} from "react-router-dom";
-import { Layout } from "./pages/Layout";
-import { Home } from "./pages/Home";
-import { Single } from "./pages/Single";
-import { Demo } from "./pages/Demo";
+import { Home } from "./pages/Home.jsx";
+import { Perfil } from "./pages/Perfil.jsx";
+import { Entrenamiento } from "./pages/Entrenamiento.jsx";
+import { Nutricion } from "./pages/Nutricion.jsx";
+import { Peso } from "./pages/Peso.jsx";
+import { Progreso } from "./pages/Progreso.jsx";
+import { PlanIA } from "./pages/PlanIA.jsx";
 
-export const router = createBrowserRouter(
-    createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
+import { Sidebar } from "./components/Sidebar.jsx";
+import { Footer } from "./components/Footer.jsx";
 
-      // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
+const MainLayout = () => (
+  <div className="flex min-h-screen bg-[#0a0a0a] text-[#e5e2e1] font-sans w-full overflow-x-hidden">
+    <Sidebar />
+    <div className="lg:ml-64 flex-1 flex flex-col justify-between min-h-screen w-full">
+     <main className="p-4 sm:p-6 lg:p-8 pt-24 lg:pt-8 space-y-6 lg:space-y-8 flex-1 w-full">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  </div>
+);
 
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
+export const router = createHashRouter(
+  createRoutesFromElements(
+    <Route path="/">
+      {/* HOME INDEPENDIENTE (Pantalla completa) */}
+      <Route index element={<Home />} />
+      <Route path="home" element={<Home />} />
+      <Route path="home.html" element={<Home />} />
+
+      {/* PÁGINAS INTERNAS (Con Sidebar y Footer) */}
+      <Route element={<MainLayout />}>
+        <Route path="progreso" element={<Progreso />} />
+        <Route path="progreso.html" element={<Progreso />} />
+
+        <Route path="perfil" element={<Perfil />} />
+        <Route path="perfil.html" element={<Perfil />} />
+
+        <Route path="entrenamiento" element={<Entrenamiento />} />
+        <Route path="entrenamiento.html" element={<Entrenamiento />} />
+
+        <Route path="nutricion" element={<Nutricion />} />
+        <Route path="nutricion.html" element={<Nutricion />} />
+
+        <Route path="peso" element={<Peso />} />
+        <Route path="peso.html" element={<Peso />} />
+
+        <Route path="plania" element={<PlanIA />} />
+        <Route path="plania.html" element={<PlanIA />} />
       </Route>
-    )
+
+      <Route path="*" element={<h1 className="text-white p-10 font-bold">404 - Página no encontrada</h1>} />
+    </Route>
+  )
 );

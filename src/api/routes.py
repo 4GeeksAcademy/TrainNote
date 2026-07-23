@@ -129,6 +129,14 @@ def parsear_rango_fechas(request_args):
 # ==========================================
 # UTILIDADES ENVIO DE CORREO CON GMAIL
 # ==========================================
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
+import os
+import smtplib
+
+
 def enviar_correo_smtp(destinatario, codigo):
   remitente = os.getenv("MAIL_USERNAME")
   password_app = os.getenv("MAIL_PASSWORD")
@@ -136,18 +144,64 @@ def enviar_correo_smtp(destinatario, codigo):
   if not remitente or not password_app:
     return False
 
-  mensaje = MIMEMultipart()
-  mensaje["From"] = remitente
-  mensaje["To"] = destinatario
-  mensaje["Subject"] = "Código de Recuperación - TrainNote"
+  # Obtener fecha y hora actual formateada
+  ahora = datetime.now()
+  fecha_hora_asunto = ahora.strftime("%d/%m/%Y a las %H:%M")
 
-  cuerpo = f"""
-    Hola:
-    Has solicitado restablecer tu contraseña en TrainNote.
-    Tu código de seguridad de 6 dígitos es: {codigo}
-    Este código expirará en 15 minutos. Si no realizaste esta solicitud, ignora este mensaje.
-    """
-  mensaje.attach(MIMEText(cuerpo, "plain"))
+
+  mensaje = MIMEMultipart("alternative")
+  mensaje["From"] = f"TrainNote <{remitente}>"
+  mensaje["To"] = destinatario
+  mensaje["Reply-To"] = remitente
+  mensaje["Subject"] = f"Código de Recuperación - TrainNote [{fecha_hora_asunto}]"
+  mensaje["Date"] = formatdate(localtime=True)
+  mensaje["Message-ID"] = make_msgid(domain="trainnote.com")
+
+  texto_plano = f"""
+Hola:
+
+Has solicitado restablecer tu contraseña en TrainNote el {fecha_hora_asunto}.
+
+Tu código de seguridad es: {codigo}
+
+Este código expirará en 15 minutos. Si no realizaste esta solicitud, puedes ignorar este mensaje de forma segura.
+
+Atentamente,
+El equipo de TrainNote.
+"""
+  texto_html = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Código de Recuperación - TrainNote</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333333;">
+  <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="color: #2c3e50; text-align: center; margin-top: 0;">TrainNote</h2>
+    <hr style="border: none; border-top: 1px solid #eeeeee; margin: 20px 0;">
+    <p>Hola,</p>
+    <p>Has solicitado restablecer tu contraseña para tu cuenta de <strong>TrainNote</strong> el <em>{fecha_hora_asunto}</em>.</p>
+    <p>Utiliza el siguiente código de verificación de 6 dígitos:</p>
+    
+    <div style="text-align: center; margin: 25px 0;">
+      <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; background-color: #eff6ff; padding: 10px 20px; border-radius: 6px; border: 1px dashed #2563eb; display: inline-block;">
+        {codigo}
+      </span>
+    </div>
+
+    <p style="font-size: 14px; color: #666666;">Este código es válido durante <strong>15 minutos</strong>.</p>
+    <p style="font-size: 13px; color: #888888; margin-top: 25px;">Si no has sido tú quien solicitó este cambio, puedes ignorar este mensaje con seguridad.</p>
+    
+    <hr style="border: none; border-top: 1px solid #eeeeee; margin: 20px 0;">
+    <p style="font-size: 12px; color: #aaaaaa; text-align: center; margin-bottom: 0;">&copy; {ahora.year} TrainNote. Todos los derechos reservados.</p>
+  </div>
+</body>
+</html>
+"""
+
+  mensaje.attach(MIMEText(texto_plano, "plain", "utf-8"))
+  mensaje.attach(MIMEText(texto_html, "html", "utf-8"))
 
   try:
     servidor = smtplib.SMTP("smtp.gmail.com", 587)
@@ -156,10 +210,10 @@ def enviar_correo_smtp(destinatario, codigo):
     servidor.sendmail(remitente, destinatario, mensaje.as_string())
     servidor.quit()
     return True
-  except Exception:
+  except Exception as e:
+    print(f"Error SMTP al enviar correo: {e}")
     return False
-
-
+  
 # ==========================================
 # ENDPOINTS DE AUTENTICACIÓN
 # ==========================================
@@ -220,7 +274,7 @@ def register():
 @api_bp.route("/api/login", methods=["POST"])
 def login():
   data = request.get_json() or {}
-  correo = data.get("email")
+  correo = data.get("email").lower().strip()
   password = data.get("password")
 
   if not correo or not password:
@@ -261,7 +315,7 @@ def logout():
 @api_bp.route("/api/request-code", methods=["POST"])
 def request_code():
   data = request.get_json() or {}
-  correo = data.get("email")
+  correo = data.get("email").lower().strip()
 
   if not correo:
     return jsonify({"error": "El correo es obligatorio."}), 400
@@ -309,7 +363,7 @@ def request_code():
 @api_bp.route("/api/verify-code", methods=["POST"])
 def verify_code():
   data = request.get_json() or {}
-  correo = data.get("email")
+  correo = data.get("email").lower().strip()
   codigo_ingresado = data.get("codigo")
 
   if not correo or not codigo_ingresado:
@@ -339,7 +393,7 @@ def verify_code():
 @api_bp.route("/api/reset", methods=["POST"])
 def reset_password():
   data = request.get_json() or {}
-  correo = data.get("email")
+  correo = data.get("email").lower().strip()
   codigo_ingresado = data.get("codigo")
   nuevo_password = data.get("password") or data.get("nuevo_password")
 
@@ -897,79 +951,85 @@ def delete_weight(id):
 @api_bp.route("/api/progress_summary", methods=["GET"])
 @jwt_required()
 def get_progress_summary():
-  current_user_id = int(get_jwt_identity())
-  user = Usuario.query.get(current_user_id)
-  if not user:
-    return jsonify({"error": "Usuario no encontrado."}), 404
+    current_user_id = int(get_jwt_identity())
+    user = Usuario.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado."}), 404
 
-  pesos = (
-      Peso.query.filter_by(usuario_id=current_user_id)
-      .order_by(Peso.fecha.asc())
-      .all()
-  )
-  peso_inicial = float(pesos[0].peso_kg) if pesos else None
-  peso_actual = float(pesos[-1].peso_kg) if pesos else None
-  peso_deseado = float(user.peso_deseado) if user.peso_deseado else None
+    primer_peso_row = (
+        Peso.query.filter_by(usuario_id=current_user_id)
+        .order_by(Peso.fecha.asc())
+        .first()
+    )
+    
+    ultimo_peso_row = (
+        Peso.query.filter_by(usuario_id=current_user_id)
+        .order_by(Peso.fecha.desc())
+        .first()
+    )
 
-  cambio_total = None
-  if peso_inicial is not None and peso_actual is not None:
-    cambio_total = round(peso_actual - peso_inicial, 2)
+    peso_inicial = float(primer_peso_row.peso_kg) if primer_peso_row else None
+    peso_actual = float(ultimo_peso_row.peso_kg) if ultimo_peso_row else None
+    peso_deseado = float(user.peso_deseado) if user.peso_deseado else None
 
-  hoy = date.today()
-  inicio_mes = hoy.replace(day=1)
-  inicio_semana = hoy - timedelta(days=hoy.weekday())
+    cambio_total = None
+    if peso_inicial is not None and peso_actual is not None:
+        cambio_total = round(peso_actual - peso_inicial, 2)
+  
+    hoy = date.today()
+    inicio_mes = hoy.replace(day=1)
+    inicio_semana = hoy - timedelta(days=hoy.weekday())
 
-  workouts_mes = Entrenamiento.query.filter(
-      Entrenamiento.usuario_id == current_user_id,
-      Entrenamiento.fecha >= inicio_mes,
-  ).count()
+    workouts_mes = Entrenamiento.query.filter(
+        Entrenamiento.usuario_id == current_user_id,
+        Entrenamiento.fecha >= inicio_mes,
+    ).count()
 
-  workouts_semana = Entrenamiento.query.filter(
-      Entrenamiento.usuario_id == current_user_id,
-      Entrenamiento.fecha >= inicio_semana,
-  ).count()
+    workouts_semana = Entrenamiento.query.filter(
+        Entrenamiento.usuario_id == current_user_id,
+        Entrenamiento.fecha >= inicio_semana,
+    ).count()
 
-  max_duracion_row = (
-      db.session.query(db.func.max(Entrenamiento.duracion))
-      .filter(Entrenamiento.usuario_id == current_user_id)
-      .scalar()
-  )
-  mejor_duracion_min = max_duracion_row if max_duracion_row else 0
+    max_duracion_row = (
+        db.session.query(db.func.max(Entrenamiento.duracion))
+        .filter(Entrenamiento.usuario_id == current_user_id)
+        .scalar()
+    )
+    mejor_duracion_min = max_duracion_row if max_duracion_row else 0
 
-  nutricion_stats = (
-      db.session.query(
-          db.func.avg(Nutricion.caloria), db.func.avg(Nutricion.proteina)
-      )
-      .filter(Nutricion.usuario_id == current_user_id)
-      .first()
-  )
+    nutricion_stats = (
+        db.session.query(
+            db.func.avg(Nutricion.caloria), db.func.avg(Nutricion.proteina)
+        )
+        .filter(Nutricion.usuario_id == current_user_id)
+        .first()
+    )
 
-  promedio_calorias = (
-      round(float(nutricion_stats[0]), 2)
-      if nutricion_stats and nutricion_stats[0]
-      else 0
-  )
-  promedio_proteinas = (
-      round(float(nutricion_stats[1]), 2)
-      if nutricion_stats and nutricion_stats[1]
-      else 0
-  )
+    promedio_calorias = (
+        round(float(nutricion_stats[0]), 2)
+        if nutricion_stats and nutricion_stats[0]
+        else 0
+    )
+    promedio_proteinas = (
+        round(float(nutricion_stats[1]), 2)
+        if nutricion_stats and nutricion_stats[1]
+        else 0
+    )
 
-  return (
-      jsonify({
-          "peso_inicial": peso_inicial,
-          "peso_actual": peso_actual,
-          "peso_deseado": peso_deseado,
-          "cambio_total_kg": cambio_total,
-          "workouts_mes": workouts_mes,
-          "workouts_semana": workouts_semana,
-          "mejor_duracion_minutos": mejor_duracion_min,
-          "promedio_calorias": promedio_calorias,
-          "promedio_proteinas_g": promedio_proteinas,
-      }),
-      200,
-  )
-
+    return (
+        jsonify({
+            "peso_inicial": peso_inicial,
+            "peso_actual": peso_actual,
+            "peso_deseado": peso_deseado,
+            "cambio_total_kg": cambio_total,
+            "workouts_mes": workouts_mes,
+            "workouts_semana": workouts_semana,
+            "mejor_duracion_minutos": mejor_duracion_min,
+            "promedio_calorias": promedio_calorias,
+            "promedio_proteinas_g": promedio_proteinas,
+        }),
+        200,
+    )
 
 @api_bp.route("/api/progress_weight", methods=["GET"])
 @jwt_required()
