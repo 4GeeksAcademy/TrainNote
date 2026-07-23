@@ -26,7 +26,7 @@ export const AvatarCard = ({ user, onUpdateAvatar }) => {
     formData.append("upload_preset", "trainnote_preset");
 
     try {
-      const cloudName = "tu_api_key_aqui";
+      const cloudName = "vtwzqqon";
       formData.append("upload_preset", "trainnote_preset");
       const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: "POST",
