@@ -18,7 +18,7 @@ export const WeightQuickForm = ({ onSubmit, loading }) => {
     <div className="bg-[#1a1a1a]/65 backdrop-blur-md border border-white/10 p-4 sm:p-5 rounded-xl shadow-xl">
       <div className="flex items-center gap-2 border-b border-white/5 pb-2.5 mb-3">
         <span className="material-symbols-outlined text-[#ff6b00] text-base">monitor_weight</span>
-        <h3 className="text-xs font-mono font-bold uppercase text-white tracking-widest">Registro Rápido</h3>
+        <h3 className="text-xs font-mono font-bold uppercase text-white tracking-widest">Registrar Peso</h3>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

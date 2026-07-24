@@ -1,5 +1,7 @@
 import React from "react";
 import {
+  esPlanEntrenamiento,
+  getDiasEntrenamiento,
   getComidas,
   getAlimentosComida,
   getMacros,
@@ -7,7 +9,6 @@ import {
 } from "../utils/planHelpers";
 
 export const PlanResultContent = ({ resultado }) => {
-  
   let resParsed = resultado;
   if (typeof resultado === "string") {
     try {
@@ -25,15 +26,8 @@ export const PlanResultContent = ({ resultado }) => {
     );
   }
 
-
-  const diasEntrenamiento = resParsed.semana || resParsed.dias || resParsed.ejercicios || [];
-  const esEntrenamiento =
-    diasEntrenamiento.length > 0 ||
-    resParsed.tipo_plan === "training" ||
-    resParsed.tipo_plan === "ENTRENAMIENTO" ||
-    resParsed.objetivo ||
-    resParsed.enfoque;
-
+  const esEntrenamiento = esPlanEntrenamiento(resParsed);
+  const diasEntrenamiento = esEntrenamiento ? getDiasEntrenamiento(resParsed) : [];
   const macros = getMacros(resParsed);
 
   return (
@@ -62,54 +56,53 @@ export const PlanResultContent = ({ resultado }) => {
       {/* CONTENIDO ESPECÍFICO */}
       {esEntrenamiento ? (
         <div className="space-y-3">
-          {diasEntrenamiento.map((dia, idx) => {
-            const enfoqueDia = dia.enfoque_sesion || dia.enfoque || `Día ${dia.dia || idx + 1}`;
-            const calentamientoTexto = Array.isArray(dia.calentamiento)
-              ? dia.calentamiento.join(" · ")
-              : dia.calentamiento;
+          {diasEntrenamiento.length === 0 && (
+            <p className="text-[10px] font-mono text-[#e2bfb0]/50 uppercase text-center py-6">
+              No se encontraron días en este plan.
+            </p>
+          )}
 
-            return (
-              <div key={idx} className="bg-black/50 border border-white/10 rounded-lg p-3.5 space-y-2">
-                <p className="text-xs sm:text-sm font-mono font-bold text-[#ff6b00] uppercase">
-                  Día {dia.dia || idx + 1} · {enfoqueDia}
+          {diasEntrenamiento.map((dia, idx) => (
+            <div key={idx} className="bg-black/50 border border-white/10 rounded-lg p-3.5 space-y-2">
+              <p className="text-xs sm:text-sm font-mono font-bold text-[#ff6b00] uppercase">
+                Día {dia.dia} · {dia.enfoque_sesion}
+              </p>
+
+              {dia.calentamiento && (
+                <p className="text-[11px] font-mono text-[#e2bfb0]/80">
+                  <strong className="text-white">Calentamiento:</strong> {dia.calentamiento}
                 </p>
+              )}
 
-                {calentamientoTexto && (
-                  <p className="text-[11px] font-mono text-[#e2bfb0]/80">
-                    <strong className="text-white">Calentamiento:</strong> {calentamientoTexto}
-                  </p>
-                )}
-
-                <div className="space-y-2 pt-1">
-                  {(dia.ejercicios || []).map((ej, i) => (
-                    <div
-                      key={i}
-                      className="flex flex-wrap items-baseline justify-between text-xs font-mono text-white/90 bg-white/5 px-3 py-2 rounded-md border border-white/5"
-                    >
-                      <span className="font-bold text-white">{ej.nombre}</span>
-                      <div className="flex flex-wrap gap-3 text-[11px]">
-                        <span className="text-[#ff6b00] font-bold">
-                          {ej.series} x {ej.repeticiones}
-                        </span>
-                        {ej.descanso_segundos !== undefined && ej.descanso_segundos !== null ? (
-                          <span className="text-[#e2bfb0]/80">Descanso: {ej.descanso_segundos}s</span>
-                        ) : ej.descanso ? (
-                          <span className="text-[#e2bfb0]/80">Descanso: {ej.descanso}</span>
-                        ) : null}
-                      </div>
-                      {ej.notas && <p className="w-full text-[10px] text-[#e2bfb0]/60 italic mt-0.5">— {ej.notas}</p>}
+              <div className="space-y-2 pt-1">
+                {dia.ejercicios.map((ej, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-wrap items-baseline justify-between text-xs font-mono text-white/90 bg-white/5 px-3 py-2 rounded-md border border-white/5"
+                  >
+                    <span className="font-bold text-white">{ej.nombre}</span>
+                    <div className="flex flex-wrap gap-3 text-[11px]">
+                      <span className="text-[#ff6b00] font-bold">
+                        {ej.series} x {ej.repeticiones}
+                      </span>
+                      {ej.descanso_segundos !== undefined && ej.descanso_segundos !== null ? (
+                        <span className="text-[#e2bfb0]/80">Descanso: {ej.descanso_segundos}s</span>
+                      ) : ej.descanso ? (
+                        <span className="text-[#e2bfb0]/80">Descanso: {ej.descanso}</span>
+                      ) : null}
                     </div>
-                  ))}
-                </div>
-
-                {dia.cardio_finisher && (
-                  <p className="text-[11px] font-mono text-[#e2bfb0]/80 pt-1">
-                    <strong className="text-white">Cardio:</strong> {dia.cardio_finisher}
-                  </p>
-                )}
+                    {ej.notas && <p className="w-full text-[10px] text-[#e2bfb0]/60 italic mt-0.5">— {ej.notas}</p>}
+                  </div>
+                ))}
               </div>
-            );
-          })}
+
+              {dia.cardio_finisher && (
+                <p className="text-[11px] font-mono text-[#e2bfb0]/80 pt-1">
+                  <strong className="text-white">Cardio:</strong> {dia.cardio_finisher}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-3">

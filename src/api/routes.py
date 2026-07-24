@@ -7,6 +7,7 @@ import random
 import re
 import smtplib
 import time
+from zoneinfo import ZoneInfo
 
 from api.models import (
     CodigoRecuperacion,
@@ -40,57 +41,165 @@ api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
 # ==========================================
+# ZONA HORARIA DE REFERENCIA (Venezuela)
+# ==========================================
+VENEZUELA_TZ = ZoneInfo("America/Caracas")
+
+
+def fecha_venezuela_hoy():
+  """Devuelve la fecha calendario actual en Venezuela, sin importar la zona horaria del servidor."""
+  return datetime.now(VENEZUELA_TZ).date()
+
+# ==========================================
 # UTILIDADES CONEXION CON GEMINIS
 # ==========================================
-MODELOS_FALLBACK = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'] 
+MODELOS_FALLBACK = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash']
 MAX_REINTENTOS = 1
 
 
 def extraer_retry_delay(mensaje, default=20):
-  match = re.search(r"retryDelay['\"]?:\s*['\"]?(\d+)", mensaje)
-  if match:
-    return int(match.group(1))
-  return default
+    match = re.search(r"retryDelay['\"]?:\s*['\"]?(\d+)", mensaje)
+    if match:
+        return int(match.group(1))
+    return default
 
-
-def generar_con_reintentos(prompt_texto):
-  ultimo_error = None
-
-  for modelo in MODELOS_FALLBACK:
-    for intento in range(MAX_REINTENTOS):
-      try:
-        response = client.models.generate_content(
-            model=modelo,
-            contents=prompt_texto,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.3,
-                max_output_tokens=4096,
+SCHEMA_ENTRENAMIENTO = types.Schema(
+    type=types.Type.OBJECT,
+    required=["tipo_plan", "nivel", "objetivo", "dias_por_semana", "tiempo_por_sesion_minutos", "equipo", "programa"],
+    properties={
+        "tipo_plan": types.Schema(type=types.Type.STRING, enum=["training"]),
+        "nivel": types.Schema(type=types.Type.STRING),
+        "objetivo": types.Schema(type=types.Type.STRING),
+        "dias_por_semana": types.Schema(type=types.Type.INTEGER),
+        "tiempo_por_sesion_minutos": types.Schema(type=types.Type.INTEGER),
+        "equipo": types.Schema(type=types.Type.STRING),
+        "lesiones_limitaciones": types.Schema(type=types.Type.STRING),
+        "programa": types.Schema(
+            type=types.Type.ARRAY,
+            items=types.Schema(
+                type=types.Type.OBJECT,
+                required=["dia", "enfoque_sesion", "calentamiento", "ejercicios"],
+                properties={
+                    "dia": types.Schema(type=types.Type.INTEGER),
+                    "enfoque_sesion": types.Schema(type=types.Type.STRING),
+                    "calentamiento": types.Schema(type=types.Type.STRING),
+                    "ejercicios": types.Schema(
+                        type=types.Type.ARRAY,
+                        items=types.Schema(
+                            type=types.Type.OBJECT,
+                            required=["nombre", "series", "repeticiones", "descanso_segundos"],
+                            properties={
+                                "nombre": types.Schema(type=types.Type.STRING),
+                                "series": types.Schema(type=types.Type.INTEGER),
+                                "repeticiones": types.Schema(type=types.Type.STRING),
+                                "descanso_segundos": types.Schema(type=types.Type.INTEGER),
+                                "notas": types.Schema(type=types.Type.STRING),
+                            },
+                        ),
+                    ),
+                    "cardio_finisher": types.Schema(type=types.Type.STRING),
+                },
             ),
-        )
-        return response, modelo
-      except Exception as e:
-        mensaje = str(e)
-        ultimo_error = e
-        es_429 = "429" in mensaje or "RESOURCE_EXHAUSTED" in mensaje
-        es_404 = "404" in mensaje or "NOT_FOUND" in mensaje
+        ),
+        "recomendaciones": types.Schema(
+            type=types.Type.ARRAY,
+            items=types.Schema(type=types.Type.STRING),
+        ),
+    },
+)
 
-        if es_404:
-          break
+SCHEMA_NUTRICION = types.Schema(
+    type=types.Type.OBJECT,
+    required=["tipo_plan", "datos_usuario", "distribucion_macros", "plan_comidas"],
+    properties={
+        "tipo_plan": types.Schema(type=types.Type.STRING, enum=["nutrition"]),
+        "datos_usuario": types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "edad": types.Schema(type=types.Type.INTEGER),
+                "peso_actual_kg": types.Schema(type=types.Type.NUMBER),
+                "peso_deseado_kg": types.Schema(type=types.Type.NUMBER),
+                "altura_cm": types.Schema(type=types.Type.NUMBER),
+                "actividad": types.Schema(type=types.Type.STRING),
+                "comidas_por_dia": types.Schema(type=types.Type.INTEGER),
+                "objetivo": types.Schema(type=types.Type.STRING),
+                "preferencia": types.Schema(type=types.Type.STRING),
+                "alergias": types.Schema(type=types.Type.STRING),
+                "excluidos": types.Schema(type=types.Type.STRING),
+                "calorias_objetivo": types.Schema(type=types.Type.INTEGER),
+            },
+        ),
+        "distribucion_macros": types.Schema(
+            type=types.Type.OBJECT,
+            required=["calorias", "proteinas_g", "carbohidratos_g", "grasas_g"],
+            properties={
+                "calorias": types.Schema(type=types.Type.INTEGER),
+                "proteinas_g": types.Schema(type=types.Type.INTEGER),
+                "carbohidratos_g": types.Schema(type=types.Type.INTEGER),
+                "grasas_g": types.Schema(type=types.Type.INTEGER),
+                "agua_litros": types.Schema(type=types.Type.NUMBER),
+            },
+        ),
+        "plan_comidas": types.Schema(
+            type=types.Type.ARRAY,
+            items=types.Schema(
+                type=types.Type.OBJECT,
+                required=["comida", "opciones"],
+                properties={
+                    "comida": types.Schema(type=types.Type.STRING),
+                    "opciones": types.Schema(
+                        type=types.Type.ARRAY,
+                        items=types.Schema(type=types.Type.STRING),
+                    ),
+                },
+            ),
+        ),
+        "recomendaciones_generales": types.Schema(
+            type=types.Type.ARRAY,
+            items=types.Schema(type=types.Type.STRING),
+        ),
+    },
+)
 
-        if not es_429:
-          raise
 
-        es_limite_diario = "PerDay" in mensaje or "RPD" in mensaje
+def generar_con_reintentos(prompt_texto, response_schema):
+    ultimo_error = None
 
-        if es_limite_diario or intento == MAX_REINTENTOS - 1:
-          break
+    for modelo in MODELOS_FALLBACK:
+        for intento in range(MAX_REINTENTOS):
+            try:
+                response = client.models.generate_content(
+                    model=modelo,
+                    contents=prompt_texto,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=response_schema,
+                        temperature=0.3,
+                        max_output_tokens=4096,
+                    ),
+                )
+                return response, modelo
+            except Exception as e:
+                mensaje = str(e)
+                ultimo_error = e
+                es_429 = "429" in mensaje or "RESOURCE_EXHAUSTED" in mensaje
+                es_404 = "404" in mensaje or "NOT_FOUND" in mensaje
 
-        espera = min(extraer_retry_delay(mensaje), 10) + random.uniform(0, 1)
-        time.sleep(espera)
+                if es_404:
+                    break
 
-  raise ultimo_error
+                if not es_429:
+                    raise
 
+                es_limite_diario = "PerDay" in mensaje or "RPD" in mensaje
+
+                if es_limite_diario or intento == MAX_REINTENTOS - 1:
+                    break
+
+                espera = min(extraer_retry_delay(mensaje), 10) + random.uniform(0, 1)
+                time.sleep(espera)
+
+    raise ultimo_error
 # ==========================================
 # UTILIDADES CONFIRMACION DE PERFIL COMPLETADO
 # ==========================================
@@ -996,7 +1105,7 @@ def get_progress_summary():
     if peso_inicial is not None and peso_actual is not None:
         cambio_total = round(peso_actual - peso_inicial, 2)
   
-    hoy = date.today()
+    hoy = fecha_venezuela_hoy()
     inicio_mes = hoy.replace(day=1)
     inicio_semana = hoy - timedelta(days=hoy.weekday())
 
@@ -1146,6 +1255,7 @@ def create_plan():
         Sigue todas las reglas del formato estructurado y devuelve únicamente un JSON válido con la clave "tipo_plan": "training".
         """
     enum_tipo = TipoPlanEnum.ENTRENAMIENTO
+    schema = SCHEMA_ENTRENAMIENTO
 
   else:
     req_fields = [
@@ -1183,9 +1293,10 @@ def create_plan():
         Sigue todas las reglas del formato estructurado y devuelve únicamente un JSON válido con la clave "tipo_plan": "nutrition".
         """
     enum_tipo = TipoPlanEnum.NUTRICION
+    schema = SCHEMA_NUTRICION
 
   try:
-    response, modelo_usado = generar_con_reintentos(prompt_texto)
+    response, modelo_usado = generar_con_reintentos(prompt_texto, schema)
 
     texto_respuesta = response.text.strip()
     if texto_respuesta.startswith("```"):
@@ -1207,7 +1318,7 @@ def create_plan():
 
   nuevo_plan = PlanIA(
       usuario_id=current_user_id,
-      fecha=date.today(),
+      fecha=fecha_venezuela_hoy(),
       tipo_plan=enum_tipo,
       prompt=prompt_texto,
       resultado=json.dumps(resultado_json),
@@ -1227,8 +1338,6 @@ def create_plan():
   except Exception:
     db.session.rollback()
     return jsonify({"error": "No se pudo guardar el plan generado."}), 500
-
-
 @api_bp.route("/api/plans", methods=["GET"])
 @jwt_required()
 def get_plans():

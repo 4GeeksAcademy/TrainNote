@@ -19,11 +19,11 @@ export const Sidebar = () => {
   };
 
   const navItems = [
+     { label: "Progreso", path: "/progreso", icon: "trending_up" },
     { label: "Perfil", path: "/perfil", icon: "person" },
     { label: "Entrenamiento", path: "/entrenamiento", icon: "fitness_center" },
     { label: "Nutrición", path: "/nutricion", icon: "restaurant" },
     { label: "Peso", path: "/peso", icon: "monitor_weight" },
-    { label: "Progreso", path: "/progreso", icon: "trending_up" },
     { label: "Plan IA", path: "/plania", icon: "psychology" }
   ];
 
