@@ -16,7 +16,7 @@ const MainLayout = () => (
   <div className="flex min-h-screen bg-[#0a0a0a] text-[#e5e2e1] font-sans w-full overflow-x-hidden">
     <Sidebar />
     <div className="lg:ml-64 flex-1 flex flex-col justify-between min-h-screen w-full">
-     <main className="p-4 sm:p-6 lg:p-8 pt-24 lg:pt-8 space-y-6 lg:space-y-8 flex-1 w-full">
+      <main className="p-4 sm:p-6 lg:p-8 pt-24 lg:pt-8 space-y-6 lg:space-y-8 flex-1 w-full max-w-7xl mx-auto">
         <Outlet />
       </main>
       <Footer />

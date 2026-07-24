@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { actions } from "../store";
@@ -14,6 +14,13 @@ export const Home = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("login");
+
+  useEffect(() => {
+    dispatch({
+      type: "set_alert",
+      payload: { show: false, message: "", type: "error" }
+    });
+  }, []);
 
   const handleLogin = async (email, password) => {
     const success = await actions.login(dispatch, store, email, password);
@@ -68,7 +75,9 @@ export const Home = () => {
                       : "text-emerald-300 bg-emerald-950/30 border-emerald-800/40"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[20px]">warning</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    {store.alert.type === "error" ? "warning" : "check_circle"}
+                  </span>
                   <span>{store.alert.message}</span>
                 </div>
               )}

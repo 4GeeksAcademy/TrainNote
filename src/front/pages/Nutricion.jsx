@@ -1,108 +1,114 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { apiFetch } from "../store";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { actions } from "../store";
+import { NutritionQuickForm } from "../components/NutritionQuickForm";
+import { NutritionHistoryCard } from "../components/NutritionHistoryCard";
+import { getFechaLocal } from "../utils/dateHelpers";
 
 export const Nutricion = () => {
-  const { store, actions } = useContext(Context);
+  const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
-  const [nombre, setNombre] = useState("");
-  const [tipoComida, setTipoComida] = useState("Almuerzo");
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
-  const [proteina, setProteina] = useState("");
-  const [caloria, setCaloria] = useState("");
-  const [carbohidrato, setCarbohidrato] = useState("");
-  const [grasa, setGrasa] = useState("");
+ const hoy = getFechaLocal();
+  const primerDiaMes = hoy.slice(0, 8) + "01";
+
+  const [desde, setDesde] = useState(primerDiaMes);
+  const [hasta, setHasta] = useState(hoy);
 
   useEffect(() => {
-    if (!localStorage.getItem("tn_jwt_token")) return navigate("/");
-    actions.getNutrition();
+    const token = localStorage.getItem("tn_jwt_token");
+    if (!token) {
+      navigate("/");
+      return;
+    }
+    dispatch({
+      type: "set_alert",
+      payload: { show: false, message: "", type: "" }
+    });
+    actions.getNutrition(dispatch, store, desde, hasta);
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const ok = await actions.createNutrition({
-      nombre,
-      tipo_comida: tipoComida,
-      fecha,
-      proteina: parseFloat(proteina) || 0,
-      caloria: parseFloat(caloria) || 0,
-      carbohidrato: parseFloat(carbohidrato) || 0,
-      grasa: parseFloat(grasa) || 0
-    });
+  const user = store.user || JSON.parse(localStorage.getItem("tn_user_data") || "{}");
+  const userName = user?.Nombre || user?.nombre || "Atleta";
+
+  // REGISTRAR NUTRICIÓN
+  const handleRegistrarNutricion = async (payload) => {
+    const ok = await actions.registerNutrition(dispatch, store, payload);
     if (ok) {
-      setNombre("");
-      setProteina("");
-      setCaloria("");
-      setCarbohidrato("");
-      setGrasa("");
+      await actions.getNutrition(dispatch, store, desde, hasta);
     }
+    return ok;
+  };
+
+  // FILTRAR HISTORIAL POR RANGO DE FECHAS
+  const handleFiltrar = () => {
+    actions.getNutrition(dispatch, store, desde, hasta);
+  };
+
+  // ELIMINAR REGISTRO DE NUTRICIÓN
+  const handleEliminar = async (nutricionId) => {
+    await actions.deleteNutrition(dispatch, store, nutricionId);
   };
 
   return (
-    <div className="flex min-h-screen bg-[#131313] text-white">
-      <aside className="h-screen w-64 fixed left-0 top-0 border-r border-white/5 bg-[#1b1b1c] hidden md:flex flex-col p-6 space-y-4">
-        <h1 className="text-2xl font-black text-[#ff6b00] uppercase italic">Trainnote</h1>
-        <nav className="space-y-2 flex-1">
-          <Link to="/progreso.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Progreso</Link>
-          <Link to="/nutricion.html" className="block text-[#ff6b00] font-bold bg-[#ff6b00]/10 p-2 rounded">Nutrición</Link>
-          <Link to="/entrenamiento.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Entrenamiento</Link>
-          <Link to="/peso.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Peso</Link>
-        </nav>
-      </aside>
+    <div className="w-full max-w-full overflow-x-hidden space-y-4 pb-6">
+      <div className="relative z-10 space-y-4">
 
-      <main className="md:ml-64 flex-1 p-8 pt-20 grid grid-cols-12 gap-8">
-        <div className="col-span-12 lg:col-span-8 bg-[#202020] p-6 rounded-xl border border-white/10">
-          <h2 className="text-xl font-bold text-[#ff6b00] mb-6">Historial de Comidas</h2>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-xs text-[#e2bfb0] border-b border-white/10">
-                <th className="pb-3">Comida / Tipo</th>
-                <th className="pb-3 text-center">Macros (P/C/G)</th>
-                <th className="pb-3 text-right">Calorías</th>
-                <th className="pb-3 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {store.nutrition.map((item) => (
-                <tr key={item.NutricionID || item.id}>
-                  <td className="py-3">
-                    <p className="font-bold">{item.Nombre}</p>
-                    <p className="text-xs text-[#ff6b00]">{item.TipoComida} • {item.Fecha}</p>
-                  </td>
-                  <td className="text-center">{item.Proteina}g / {item.Carbohidrato}g / {item.Grasa}g</td>
-                  <td className="text-right font-bold text-[#ff6b00]">{item.Caloria} kcal</td>
-                  <td className="text-right">
-                    <button onClick={() => actions.deleteNutrition(item.NutricionID || item.id)} className="text-red-500 font-bold hover:underline">Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* ALERTA GLOBAL */}
+        {store.alert?.show && (
+          <div className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium ${
+            store.alert.type === "error" ? "text-[#ffb4ab] bg-[#93000a]/20 border-[#ffb4ab]/20" : "text-emerald-300 bg-emerald-950/40 border-emerald-800/40"
+          }`}>
+            <span className="material-symbols-outlined text-[18px]">
+              {store.alert.type === "error" ? "warning" : "check_circle"}
+            </span>
+            <span>{store.alert.message}</span>
+          </div>
+        )}
 
-        <div className="col-span-12 lg:col-span-4 bg-[#202020] p-6 rounded-xl border border-white/10">
-          <h2 className="text-xl font-bold mb-6">Registrar Comida</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input type="text" placeholder="Alimento" value={nombre} onChange={e => setNombre(e.target.value)} required className="w-full bg-[#1b1b1c] p-3 rounded border border-white/10" />
-            <select value={tipoComida} onChange={e => setTipoComida(e.target.value)} className="w-full bg-[#1b1b1c] p-3 rounded border border-white/10">
-              <option>Desayuno</option>
-              <option>Almuerzo</option>
-              <option>Cena</option>
-              <option>Merienda</option>
-            </select>
-            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} required className="w-full bg-[#1b1b1c] p-3 rounded border border-white/10" />
-            <div className="grid grid-cols-2 gap-4">
-              <input type="number" placeholder="Proteína (g)" value={proteina} onChange={e => setProteina(e.target.value)} required className="bg-[#1b1b1c] p-3 rounded border border-white/10" />
-              <input type="number" placeholder="Carbos (g)" value={carbohidrato} onChange={e => setCarbohidrato(e.target.value)} required className="bg-[#1b1b1c] p-3 rounded border border-white/10" />
-              <input type="number" placeholder="Grasas (g)" value={grasa} onChange={e => setGrasa(e.target.value)} required className="bg-[#1b1b1c] p-3 rounded border border-white/10" />
-              <input type="number" placeholder="Calorías" value={caloria} onChange={e => setCaloria(e.target.value)} required className="bg-[#1b1b1c] p-3 rounded border border-white/10" />
+        {/* HEADER UNIFICADO */}
+        <header className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 pl-10 lg:pl-0 border-b border-white/5">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold uppercase tracking-tight text-white leading-tight break-words">
+              CONTROL DE <span className="text-[#ff6b00]">NUTRICIÓN</span>
+            </h2>
+            <p className="text-[10px] sm:text-[11px] font-mono text-[#e2bfb0]/60">
+              REGISTRO Y SEGUIMIENTO DE MACROS Y ALIMENTACIÓN
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 bg-[#1a1a1a]/65 border border-white/10 px-3 py-1.5 rounded-xl w-full sm:w-auto shrink-0">
+            <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
+              account_circle
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white uppercase truncate">{userName}</p>
+              <p className="text-[9px] font-mono text-[#ff6b00] truncate">
+                Objetivo: {user?.Objetivo || user?.objetivo || "Rendimiento Atlético"}
+              </p>
             </div>
-            <button type="submit" className="w-full bg-[#ff6b00] text-black font-bold py-4 rounded-xl uppercase">Guardar Registro</button>
-          </form>
+          </div>
+        </header>
+
+        {/* SECCIÓN PRINCIPAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+          <div className="lg:col-span-1 min-w-0">
+            <NutritionQuickForm onSubmit={handleRegistrarNutricion} loading={store.loading} />
+          </div>
+          <div className="lg:col-span-2 flex flex-col min-w-0">
+            <NutritionHistoryCard
+              nutrition={store.nutrition || []}
+              desde={desde}
+              hasta={hasta}
+              onDesdeChange={setDesde}
+              onHastaChange={setHasta}
+              onFilter={handleFiltrar}
+              onDelete={handleEliminar}
+            />
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

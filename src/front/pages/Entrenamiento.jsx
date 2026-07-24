@@ -1,81 +1,114 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { apiFetch } from "../store";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { actions } from "../store";
+import { WorkoutQuickForm } from "../components/WorkoutQuickForm";
+import { WorkoutHistoryCard } from "../components/WorkoutHistoryCard";
+import { getFechaLocal } from "../utils/dateHelpers";
 
 export const Entrenamiento = () => {
-  const { store, actions } = useContext(Context);
+  const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
-  const [duracion, setDuracion] = useState(60);
-  const [nota, setNota] = useState("");
-  const [ejercicios, setEjercicios] = useState([{ ejercicio_id: 1, nombre: "Press de Banca", serie: 4, repeticion: 10, peso_ejercicio: 80 }]);
+  const hoy = getFechaLocal();
+  const primerDiaMes = hoy.slice(0, 8) + "01";
+
+  const [desde, setDesde] = useState(primerDiaMes);
+  const [hasta, setHasta] = useState(hoy);
 
   useEffect(() => {
-    if (!localStorage.getItem("tn_jwt_token")) return navigate("/");
-    actions.getWorkouts();
+    const token = localStorage.getItem("tn_jwt_token");
+    if (!token) {
+      navigate("/");
+      return;
+    }
+    dispatch({
+      type: "set_alert",
+      payload: { show: false, message: "", type: "" }
+    });
+    actions.getWorkouts(dispatch, store, desde, hasta);
   }, []);
 
-  const addRow = () => setEjercicios([...ejercicios, { ejercicio_id: ejercicios.length + 1, nombre: "", serie: 3, repeticion: 10, peso_ejercicio: 0 }]);
-  const removeRow = (idx) => setEjercicios(ejercicios.filter((_, i) => i !== idx));
-  const updateRow = (idx, field, val) => {
-    const copy = [...ejercicios];
-    copy[idx][field] = val;
-    setEjercicios(copy);
+  const user = store.user || JSON.parse(localStorage.getItem("tn_user_data") || "{}");
+  const userName = user?.Nombre || user?.nombre || "Atleta";
+
+  // REGISTRAR ENTRENAMIENTO
+  const handleRegistrarEntrenamiento = async (payload) => {
+    const ok = await actions.registerWorkout(dispatch, store, payload);
+    if (ok) {
+      await actions.getWorkouts(dispatch, store, desde, hasta);
+    }
+    return ok;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (ejercicios.length === 0 || !ejercicios[0].nombre) return actions.showAlert("Agregue al menos un ejercicio", "error");
-    const ok = await actions.createWorkout({ fecha, duracion: parseInt(duracion), nota, ejercicios });
-    if (ok) {
-      setNota("");
-      setEjercicios([{ ejercicio_id: 1, nombre: "", serie: 4, repeticion: 10, peso_ejercicio: 0 }]);
-    }
+  // FILTRAR HISTORIAL POR RANGO DE FECHAS
+  const handleFiltrar = () => {
+    actions.getWorkouts(dispatch, store, desde, hasta);
+  };
+
+  // ELIMINAR REGISTRO
+  const handleEliminar = async (entrenamientoId) => {
+    await actions.deleteWorkout(dispatch, store, entrenamientoId);
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0a0a0a] text-white">
-      <aside className="h-screen w-64 fixed left-0 top-0 border-r border-white/5 bg-[#141414] hidden md:flex flex-col p-6 space-y-4">
-        <h1 className="text-2xl font-black text-[#ff6b00] uppercase italic">Trainnote</h1>
-        <nav className="space-y-2 flex-1">
-          <Link to="/progreso.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Progreso</Link>
-          <Link to="/entrenamiento.html" className="block text-[#ff6b00] font-bold bg-[#ff6b00]/10 p-2 rounded">Entrenamiento</Link>
-          <Link to="/nutricion.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Nutrición</Link>
-          <Link to="/peso.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Peso</Link>
-          <Link to="/plania.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Plan IA</Link>
-        </nav>
-      </aside>
+    <div className="w-full max-w-full overflow-x-hidden space-y-4 pb-6">
+      <div className="relative z-10 space-y-4">
 
-      <main className="md:ml-64 flex-1 p-8 pt-20 space-y-8">
-        <h2 className="text-3xl font-bold">Registrar Sesión</h2>
-        <form onSubmit={handleSubmit} className="bg-[#141414] p-8 rounded-xl border border-white/10 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="bg-[#1b1b1c] p-3 rounded border border-white/10 text-white" />
-            <input type="text" placeholder="Rutina (Ej: Empuje A)" value={nota} onChange={e => setNota(e.target.value)} className="bg-[#1b1b1c] p-3 rounded border border-white/10 text-white" />
-            <input type="number" placeholder="Duración min" value={duracion} onChange={e => setDuracion(e.target.value)} className="bg-[#1b1b1c] p-3 rounded border border-white/10 text-white" />
+        {/* ALERTA GLOBAL */}
+        {store.alert?.show && (
+          <div className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium ${
+            store.alert.type === "error" ? "text-[#ffb4ab] bg-[#93000a]/20 border-[#ffb4ab]/20" : "text-emerald-300 bg-emerald-950/40 border-emerald-800/40"
+          }`}>
+            <span className="material-symbols-outlined text-[18px]">
+              {store.alert.type === "error" ? "warning" : "check_circle"}
+            </span>
+            <span>{store.alert.message}</span>
+          </div>
+        )}
+
+        {/* HEADER UNIFICADO */}
+        <header className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 pl-10 lg:pl-0 border-b border-white/5">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold uppercase tracking-tight text-white leading-tight break-words">
+              CONTROL DE <span className="text-[#ff6b00]">ENTRENAMIENTO</span>
+            </h2>
+            <p className="text-[10px] sm:text-[11px] font-mono text-[#e2bfb0]/60">
+              REGISTRO Y SEGUIMIENTO DE RUTINAS Y SESIONES
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-[#ff6b00]">Lista de Ejercicios</h3>
-              <button type="button" onClick={addRow} className="bg-[#ff6b00]/10 text-[#ff6b00] font-bold px-3 py-1 text-xs rounded uppercase">+ Añadir</button>
+          <div className="flex items-center gap-3 bg-[#1a1a1a]/65 border border-white/10 px-3 py-1.5 rounded-xl w-full sm:w-auto shrink-0">
+            <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
+              account_circle
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white uppercase truncate">{userName}</p>
+              <p className="text-[9px] font-mono text-[#ff6b00] truncate">
+                Objetivo: {user?.Objetivo || user?.objetivo || "Rendimiento Atlético"}
+              </p>
             </div>
-            {ejercicios.map((ej, i) => (
-              <div key={i} className="grid grid-cols-12 gap-3 bg-[#1b1b1c] p-3 rounded">
-                <input type="text" placeholder="Ejercicio" value={ej.nombre} onChange={e => updateRow(i, "nombre", e.target.value)} className="col-span-5 bg-black/40 p-2 rounded text-sm text-white" />
-                <input type="number" placeholder="Sets" value={ej.serie} onChange={e => updateRow(i, "serie", parseInt(e.target.value))} className="col-span-2 bg-black/40 p-2 rounded text-sm text-center text-white" />
-                <input type="number" placeholder="Reps" value={ej.repeticion} onChange={e => updateRow(i, "repeticion", parseInt(e.target.value))} className="col-span-2 bg-black/40 p-2 rounded text-sm text-center text-white" />
-                <input type="number" placeholder="Kg" value={ej.peso_ejercicio} onChange={e => updateRow(i, "peso_ejercicio", parseFloat(e.target.value))} className="col-span-2 bg-black/40 p-2 rounded text-sm text-center text-white" />
-                <button type="button" onClick={() => removeRow(i)} className="col-span-1 text-red-500 font-bold">✕</button>
-              </div>
-            ))}
           </div>
+        </header>
 
-          <button type="submit" className="w-full bg-[#ff6b00] text-black font-black py-4 rounded-xl uppercase">Guardar Entrenamiento</button>
-        </form>
-      </main>
+        {/* SECCIÓN PRINCIPAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+          <div className="lg:col-span-1 min-w-0">
+            <WorkoutQuickForm onSubmit={handleRegistrarEntrenamiento} loading={store.loading} dispatch={dispatch} store={store} />
+          </div>
+          <div className="lg:col-span-2 flex flex-col min-w-0">
+            <WorkoutHistoryCard
+              workouts={store.workouts || []}
+              desde={desde}
+              hasta={hasta}
+              onDesdeChange={setDesde}
+              onHastaChange={setHasta}
+              onFilter={handleFiltrar}
+              onDelete={handleEliminar}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

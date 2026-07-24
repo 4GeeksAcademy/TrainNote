@@ -1,77 +1,173 @@
-import React, { useContext, useState } from "react";
+import React, { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { apiFetch } from "../store";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { actions } from "../store";
+import { parseResultado } from "../utils/planHelpers";
+import { PlanConfiguratorCard } from "../components/PlanConfiguratorCard";
+import { PlanHistoryCard } from "../components/PlanHistoryCard";
+import { PlanResultModal } from "../components/PlanResultModal";
+import { getFechaLocal } from "../utils/dateHelpers";
 
 export const PlanIA = () => {
-  const { actions } = useContext(Context);
+  const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
-  const [tipoPlan, setTipoPlan] = useState("entrenamiento");
-  const [nivel, setNivel] = useState("Avanzado");
-  const [diasSemana, setDiasSemana] = useState(5);
-  const [minutos, setMinutos] = useState(75);
-  const [enfoque, setEnfoque] = useState("Hipertrofia");
+  const hoy = getFechaLocal();
+  const primerDiaMes = hoy.slice(0, 8) + "01";
 
-  const [resultado, setResultado] = useState(null);
+  const [desde, setDesde] = useState(primerDiaMes);
+  const [hasta, setHasta] = useState(hoy);
+  const [ultimoPlan, setUltimoPlan] = useState(null);
+  const [planSeleccionado, setPlanSeleccionado] = useState(null);
+  const [resetKey, setResetKey] = useState(0);
 
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-    const res = await actions.createPlan({
-      tipo_plan: tipoPlan,
-      nivel,
-      dias_semana: diasSemana,
-      minutos_sesion: minutos,
-      enfoque
+  useEffect(() => {
+    const token = localStorage.getItem("tn_jwt_token");
+    if (!token) {
+      navigate("/");
+      return;
+    }
+    dispatch({
+      type: "set_alert",
+      payload: { show: false, message: "", type: "" }
     });
-    if (res) setResultado(res);
+    actions.getPlans(dispatch, store, desde, hasta);
+  }, []);
+
+  const user = store.user || JSON.parse(localStorage.getItem("tn_user_data") || "{}");
+  const userName = user?.Nombre || user?.nombre || "Atleta";
+
+  // GENERAR NUEVO PLAN CON IA
+  const handleGenerarPlan = async (payload) => {
+    const res = await actions.generatePlan(dispatch, store, payload);
+    if (res && res.resultado) {
+      setUltimoPlan({ tipo: payload.tipo_plan, resultado: res.resultado });
+      setResetKey((prev) => prev + 1); // <--- Limpia los campos del formulario
+      await actions.getPlans(dispatch, store, desde, hasta);
+    }
+  };
+
+  // FILTRAR HISTORIAL POR RANGO DE FECHAS
+  const handleFiltrar = () => {
+    actions.getPlans(dispatch, store, desde, hasta);
+  };
+
+  // ELIMINAR PLAN
+  const handleEliminar = async (planId) => {
+    await actions.deletePlan(dispatch, store, planId);
+  };
+
+  const handleVerUltimoPlan = () => {
+    if (!ultimoPlan) return;
+    setPlanSeleccionado({
+      TipoPlan: ultimoPlan.tipo === "ENTRENAMIENTO" ? "Entrenamiento" : "Nutricion",
+      Fecha: hoy,
+      resultado: ultimoPlan.resultado,
+    });
+    setUltimoPlan(null);
   };
 
   return (
-    <div className="flex min-h-screen bg-[#131313] text-white">
-      <aside className="h-screen w-64 fixed left-0 top-0 border-r border-white/5 bg-[#1b1b1c] hidden md:flex flex-col p-6 space-y-4">
-        <h1 className="text-2xl font-black text-[#ff6b00] uppercase italic">Trainnote</h1>
-        <nav className="space-y-2 flex-1">
-          <Link to="/progreso.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Progreso</Link>
-          <Link to="/plania.html" className="block text-[#ff6b00] font-bold bg-[#ff6b00]/10 p-2 rounded">Plan IA</Link>
-          <Link to="/entrenamiento.html" className="block text-[#e2bfb0] p-2 hover:text-[#ff6b00]">Entrenamiento</Link>
-        </nav>
-      </aside>
+    <div className="w-full max-w-full overflow-x-hidden space-y-4 pb-6">
+      <div className="relative z-10 space-y-4">
 
-      <main className="md:ml-64 flex-1 p-8 pt-20 grid grid-cols-12 gap-8">
-        <div className="col-span-12 lg:col-span-4 bg-[#202020] p-6 rounded-xl border border-white/10 space-y-6">
-          <h2 className="text-xl font-bold text-[#ff6b00]">Configurador IA</h2>
-          <div className="flex bg-[#1b1b1c] p-1 rounded-lg">
-            <button onClick={() => setTipoPlan("entrenamiento")} className={`flex-1 py-2 font-bold text-xs uppercase rounded ${tipoPlan === "entrenamiento" ? "bg-[#ff6b00] text-black" : "text-[#e2bfb0]"}`}>Entrenamiento</button>
-            <button onClick={() => setTipoPlan("nutricion")} className={`flex-1 py-2 font-bold text-xs uppercase rounded ${tipoPlan === "nutricion" ? "bg-[#ff6b00] text-black" : "text-[#e2bfb0]"}`}>Nutrición</button>
+        {/* ALERTA GLOBAL */}
+        {store.alert?.show && (
+          <div className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium ${
+            store.alert.type === "error" ? "text-[#ffb4ab] bg-[#93000a]/20 border-[#ffb4ab]/20" : "text-emerald-300 bg-emerald-950/40 border-emerald-800/40"
+          }`}>
+            <span className="material-symbols-outlined text-[18px]">
+              {store.alert.type === "error" ? "warning" : "check_circle"}
+            </span>
+            <span>{store.alert.message}</span>
+          </div>
+        )}
+
+        {/* HEADER UNIFICADO */}
+        <header className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 pl-10 lg:pl-0 border-b border-white/5">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold uppercase tracking-tight text-white leading-tight break-words">
+              PLAN <span className="text-[#ff6b00]">INTELIGENTE</span>
+            </h2>
+            <p className="text-[10px] sm:text-[11px] font-mono text-[#e2bfb0]/60">
+              RUTINAS Y NUTRICIÓN GENERADAS POR IA
+            </p>
           </div>
 
-          <form onSubmit={handleGenerate} className="space-y-4">
-            <select value={nivel} onChange={e => setNivel(e.target.value)} className="w-full bg-[#1b1b1c] p-3 rounded border border-white/10 text-white">
-              <option>Principiante</option>
-              <option>Intermedio</option>
-              <option>Avanzado</option>
-            </select>
-            <input type="number" placeholder="Días por semana" value={diasSemana} onChange={e => setDiasSemana(e.target.value)} className="w-full bg-[#1b1b1c] p-3 rounded border border-white/10 text-white" />
-            <input type="text" placeholder="Enfoque principal" value={enfoque} onChange={e => setEnfoque(e.target.value)} className="w-full bg-[#1b1b1c] p-3 rounded border border-white/10 text-white" />
-            <button type="submit" className="w-full bg-[#ff6b00] text-black font-black py-4 rounded-lg uppercase">Generar Protocolo</button>
-          </form>
+          <div className="flex items-center gap-3 bg-[#1a1a1a]/65 border border-white/10 px-3 py-1.5 rounded-xl w-full sm:w-auto shrink-0">
+            <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
+              account_circle
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white uppercase truncate">{userName}</p>
+              <p className="text-[9px] font-mono text-[#ff6b00] truncate">
+                Objetivo: {user?.Objetivo || user?.objetivo || "Rendimiento Atlético"}
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* SECCIÓN PRINCIPAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+          <div className="lg:col-span-1 min-w-0 flex flex-col">
+            <PlanConfiguratorCard onGenerate={handleGenerarPlan} loading={store.loading} resetTrigger={resetKey} />
+          </div>
+
+          <div className="lg:col-span-2 min-w-0 flex flex-col">
+            {ultimoPlan ? (
+              <div className="bg-[#1a1a1a]/65 backdrop-blur-md border border-white/10 rounded-xl shadow-xl p-6 flex-1 flex flex-col items-center justify-center text-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-[#ff6b00]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#ff6b00] text-3xl">check_circle</span>
+                </div>
+                <h3 className="text-base font-bold text-white uppercase">Protocolo Generado</h3>
+                <p className="text-xs sm:text-sm font-mono text-[#e2bfb0]/70 max-w-sm">
+                  Tu plan fue sintetizado y guardado en el historial. Puedes revisarlo completo cuando quieras.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleVerUltimoPlan}
+                  className="bg-[#ff6b00] hover:bg-[#ff6b00]/90 text-white font-extrabold text-[11px] font-mono uppercase tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_12px_rgba(255,107,0,0.3)] transition-all cursor-pointer mt-1"
+                >
+                  Ver Resultado
+                </button>
+              </div>
+            ) : (
+              <div className="bg-[#1a1a1a]/65 backdrop-blur-md border border-white/10 rounded-xl shadow-xl p-6 flex-1 flex flex-col items-center justify-center text-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#e2bfb0]/40 text-3xl">psychology</span>
+                </div>
+                <h3 className="text-base font-bold text-white uppercase">Arquitectura de Rendimiento</h3>
+                <p className="text-xs sm:text-sm font-mono text-[#e2bfb0]/70 max-w-sm">
+                  Define tus parámetros para sintetizar un plan optimizado por IA.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="col-span-12 lg:col-span-8 bg-[#202020] p-8 rounded-xl border border-white/10 flex flex-col justify-center items-center">
-          {!resultado ? (
-            <div className="text-center">
-              <h3 className="text-2xl font-bold mb-2">Arquitectura de Rendimiento</h3>
-              <p className="text-sm text-[#e2bfb0]">Selecciona los parámetros e inicia la generación con inteligencia artificial.</p>
-            </div>
-          ) : (
-            <div className="w-full space-y-4">
-              <h3 className="text-2xl font-bold text-[#ff6b00]">Resultado Generado</h3>
-              <pre className="bg-[#1b1b1c] p-4 rounded text-xs overflow-x-auto text-[#e2bfb0]">{JSON.stringify(resultado, null, 2)}</pre>
-            </div>
-          )}
-        </div>
-      </main>
+        {/* HISTORIAL */}
+        <PlanHistoryCard
+          plans={store.plans}
+          desde={desde}
+          hasta={hasta}
+          onDesdeChange={setDesde}
+          onHastaChange={setHasta}
+          onFilter={handleFiltrar}
+          onDelete={handleEliminar}
+          onVerResultado={(plan) =>
+            setPlanSeleccionado({ ...plan, resultado: parseResultado(plan.Resultado) })
+          }
+        />
+      </div>
+
+      {/* MODAL RESULTADO */}
+      {planSeleccionado && (
+        <PlanResultModal
+          plan={planSeleccionado}
+          resultado={planSeleccionado.resultado}
+          onClose={() => setPlanSeleccionado(null)}
+        />
+      )}
     </div>
   );
 };

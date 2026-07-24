@@ -30,6 +30,14 @@ export default function storeReducer(store, action = {}) {
         user: action.payload.user,
       };
 
+    case "set_user":
+      
+      localStorage.setItem("tn_user_data", JSON.stringify(action.payload));
+      return {
+        ...store,
+        user: action.payload,
+      };
+
     case "set_workouts":
       return { ...store, workouts: action.payload };
 
@@ -348,6 +356,62 @@ export const actions = {
       console.error("Error al cargar el peso:", error);
     }
   },
+
+  // --- ACCIONES DE PESO (registro y control de peso corporal) ---
+  getWeights: async (dispatch, store, desde, hasta) => {
+    let endpoint = "/api/weights";
+    if (desde && hasta) {
+      endpoint += `?desde=${desde}&hasta=${hasta}`;
+    }
+
+    const res = await apiFetch(dispatch, store, endpoint, "GET", null, true);
+    if (res) {
+      dispatch({ type: "set_weights", payload: res });
+    }
+    return res;
+  },
+
+  registerWeight: async (dispatch, store, fecha, pesoKg) => {
+    if (!fecha || !pesoKg || pesoKg <= 0) {
+      dispatch({
+        type: "set_alert",
+        payload: {
+          show: true,
+          message: "Ingrese una fecha y un peso válido.",
+          type: "error",
+        },
+      });
+      return false;
+    }
+
+    const res = await apiFetch(
+      dispatch,
+      store,
+      "/api/weights",
+      "POST",
+      { fecha, peso_kg: pesoKg },
+      true,
+    );
+    return !!res;
+  },
+
+  deleteWeight: async (dispatch, store, pesoId) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      `/api/weights/${pesoId}`,
+      "DELETE",
+      null,
+      true,
+    );
+
+    if (res) {
+      const pesosRestantes = store.weights.filter((w) => w.PesoID !== pesoId);
+      dispatch({ type: "set_weights", payload: pesosRestantes });
+    }
+    return !!res;
+  },
+
   getProfile: async (dispatch, store) => {
     try {
       const token = localStorage.getItem("tn_jwt_token");
@@ -382,14 +446,17 @@ export const actions = {
       );
       if (!response.ok) throw new Error("Error al actualizar perfil");
       const data = await response.json();
-      dispatch({ type: "set_user", payload: data.user || data });
+
+      const updatedUser = { ...store.user, ...(data.user || data) };
+      dispatch({ type: "set_user", payload: updatedUser });
       return true;
     } catch (error) {
       console.error(error);
       return false;
     }
   },
-  updatePassword: async (dispatch, store, current_password, password) => {
+
+  updatePassword: async (dispatch, store, currentPassword, newPassword) => {
     try {
       const token = localStorage.getItem("tn_jwt_token");
       const response = await fetch(
@@ -400,7 +467,10 @@ export const actions = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ current_password, password }),
+          body: JSON.stringify({ 
+            current_password: currentPassword,
+            password: newPassword  
+          }),
         },
       );
 
@@ -408,7 +478,7 @@ export const actions = {
 
       if (!response.ok) {
         throw new Error(
-          data.msg || data.message || "Error al actualizar la contraseña",
+          data.error || data.msg || data.message || "Error al actualizar la contraseña",
         );
       }
 
@@ -423,17 +493,135 @@ export const actions = {
       return false;
     }
   },
-  showAlert: (dispatch, store, message, type = "success") => {
-    dispatch({
-      type: "set_alert",
-      payload: { show: true, message, type },
-    });
-    setTimeout(() => {
-      dispatch({
-        type: "set_alert",
-        payload: { show: false, message: "", type: "" },
-      });
-    }, 3500);
+// --- ACCIONES DE PLAN IA ---
+  getPlans: async (dispatch, store, desde, hasta) => {
+    let endpoint = "/api/plans";
+    if (desde && hasta) {
+      endpoint += `?desde=${desde}&hasta=${hasta}`;
+    }
+
+    const res = await apiFetch(dispatch, store, endpoint, "GET", null, true);
+    if (res) {
+      dispatch({ type: "set_plans", payload: res });
+    }
+    return res;
+  },
+
+  generatePlan: async (dispatch, store, payload) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      "/api/plans",
+      "POST",
+      payload,
+      true,
+    );
+    return res;
+  },
+
+  deletePlan: async (dispatch, store, planId) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      `/api/plans/${planId}`,
+      "DELETE",
+      null,
+      true,
+    );
+
+    if (res) {
+      const planesRestantes = store.plans.filter((p) => p.PlanID !== planId);
+      dispatch({ type: "set_plans", payload: planesRestantes });
+    }
+    return !!res;
+  },
+  getNutrition: async (dispatch, store, desde, hasta) => {
+    let endpoint = "/api/nutrition";
+    if (desde && hasta) {
+      endpoint += `?desde=${desde}&hasta=${hasta}`;
+    }
+
+    const res = await apiFetch(dispatch, store, endpoint, "GET", null, true);
+    if (res) {
+      dispatch({ type: "set_nutrition", payload: res });
+    }
+    return res;
+  },
+
+  registerNutrition: async (dispatch, store, payload) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      "/api/nutrition",
+      "POST",
+      payload,
+      true,
+    );
+    return !!res;
+  },
+
+  deleteNutrition: async (dispatch, store, nutricionId) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      `/api/nutrition/${nutricionId}`,
+      "DELETE",
+      null,
+      true,
+    );
+
+    if (res) {
+      const nutricionRestante = store.nutrition.filter((n) => n.NutricionID !== nutricionId);
+      dispatch({ type: "set_nutrition", payload: nutricionRestante });
+    }
+    return !!res;
+  },
+  // --- ACCIONES DE ENTRENAMIENTO ---
+  getExercises: async (dispatch, store) => {
+    const res = await apiFetch(dispatch, store, "/api/exercises", "GET", null, true);
+    return res || [];
+  },
+
+  getWorkouts: async (dispatch, store, desde, hasta) => {
+    let endpoint = "/api/workouts";
+    if (desde && hasta) {
+      endpoint += `?desde=${desde}&hasta=${hasta}`;
+    }
+
+    const res = await apiFetch(dispatch, store, endpoint, "GET", null, true);
+    if (res) {
+      dispatch({ type: "set_workouts", payload: res });
+    }
+    return res;
+  },
+
+  registerWorkout: async (dispatch, store, payload) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      "/api/workouts",
+      "POST",
+      payload,
+      true,
+    );
+    return !!res;
+  },
+
+  deleteWorkout: async (dispatch, store, entrenamientoId) => {
+    const res = await apiFetch(
+      dispatch,
+      store,
+      `/api/workouts/${entrenamientoId}`,
+      "DELETE",
+      null,
+      true,
+    );
+
+    if (res) {
+      const entrenamientosRestantes = store.workouts.filter((w) => w.EntrenamientoID !== entrenamientoId);
+      dispatch({ type: "set_workouts", payload: entrenamientosRestantes });
+    }
+    return !!res;
   },
   // --- CIERRE DE SESIÓN ---
   logout: async (dispatch, store) => {
@@ -441,6 +629,10 @@ export const actions = {
     localStorage.removeItem("tn_jwt_token");
     localStorage.removeItem("tn_user_data");
     dispatch({ type: "logout" });
+    dispatch({
+      type: "set_alert",
+      payload: { show: false, message: "", type: "error" },
+    });
     return true;
   },
 };

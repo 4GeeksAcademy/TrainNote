@@ -211,7 +211,7 @@ El equipo de TrainNote.
     servidor.quit()
     return True
   except Exception as e:
-    print(f"Error SMTP al enviar correo: {e}")
+
     return False
   
 # ==========================================
@@ -473,9 +473,8 @@ def update_profile():
     user.peso_deseado = data.get("peso_objetivo_kg") or data.get("peso_deseado")
   if "altura_cm" in data or "altura" in data:
     user.altura = data.get("altura_cm") or data.get("altura")
-  if "url_foto_perfil" in data or "url_foto" in data:
+  if "url_ foto_perfil" in data or "url_foto" in data:
     user.url_foto = data.get("url_foto_perfil") or data.get("url_foto")
-
   try:
     db.session.commit()
     return (
@@ -485,13 +484,12 @@ def update_profile():
         }),
         200,
     )
-  except Exception:
+  except Exception as e:
     db.session.rollback()
     return (
         jsonify({"error": "No se pudo actualizar el perfil correctamente."}),
         500,
     )
-
 
 @api_bp.route("/api/password", methods=["PUT"])
 @jwt_required()
@@ -537,8 +535,14 @@ def update_password():
         jsonify({"error": "No se pudo cambiar la contraseña. Intente luego."}),
         500,
     )
-
-
+# ==========================================
+# ENDPOINTS DE EJERCICIO
+# ==========================================
+@api_bp.route("/api/exercises", methods=["GET"])
+@jwt_required()
+def get_exercises():
+    ejercicios = Ejercicio.query.all()
+    return jsonify([e.serialize() for e in ejercicios]), 200
 # ==========================================
 # ENDPOINTS DE ENTRENAMIENTOS
 # ==========================================
@@ -789,6 +793,23 @@ def create_nutrition():
         400,
     )
 
+  tipo_limpio = str(tipo).strip().upper()
+  
+  if tipo_limpio in ["DESAYUNO", "ALMUERZO", "CENA"]:
+    existente = Nutricion.query.filter_by(
+        usuario_id=current_user_id,
+        fecha=fecha_dt,
+        tipo_comida=tipo
+    ).first()
+
+    if existente:
+      return (
+          jsonify({
+              "error": f"Ya tienes registrado un {tipo.lower()} para esta fecha. Solo se permite uno por día."
+          }),
+          400,
+      )
+
   nueva_comida = Nutricion(
       usuario_id=current_user_id,
       tipo_comida=tipo,
@@ -816,7 +837,6 @@ def create_nutrition():
         jsonify({"error": "No se pudo guardar la información nutricional."}),
         500,
     )
-
 
 @api_bp.route("/api/nutrition/<int:id>", methods=["DELETE"])
 @jwt_required()
@@ -1175,7 +1195,6 @@ def create_plan():
     resultado_json = json.loads(texto_respuesta)
 
   except Exception as e:
-    print(f" ERROR EN PLAN IA: {e}")
     return (
         jsonify({
             "error": (

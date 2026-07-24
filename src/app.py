@@ -1,14 +1,15 @@
 from datetime import timedelta
 import os
-
 from api.models import db
 from api.routes import api_bp, jwt_blacklist
+from api.commands import setup_commands
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 
 app = Flask(__name__)
+setup_commands(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 db_url = os.getenv("DATABASE_URL")
 if db_url and db_url.startswith("postgres://"):

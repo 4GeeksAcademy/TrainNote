@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { actions } from "../store";
 import { WeightChart } from "../components/WeightChart";
+import { getFechaLocal } from "../utils/dateHelpers";
 
 export const Progreso = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -45,8 +46,8 @@ export const Progreso = () => {
 
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden pb-10">
-      {/* HEADER */}
-     <header className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 pl-10 lg:pl-0 border-b border-white/5">
+      {/* HEADER UNIFICADO */}
+      <header className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 pl-10 lg:pl-0 border-b border-white/5">
         <div className="min-w-0">
           <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold uppercase tracking-tight text-white leading-tight break-words">
             PANEL DE <span className="text-[#ff6b00]">EVOLUCIÓN</span>
@@ -123,7 +124,7 @@ export const Progreso = () => {
             <div className="bg-black/40 p-3 sm:p-3.5 rounded-xl border border-white/5 flex flex-col justify-between min-w-0">
               <div className="flex items-center justify-between mb-1 gap-1">
                 <span className="text-[9px] sm:text-[10px] font-mono text-[#e2bfb0]/60 uppercase leading-tight">
-                  Semana
+                  Entrenamientos de la Semana
                 </span>
                 <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
                   event
@@ -137,7 +138,7 @@ export const Progreso = () => {
             <div className="bg-black/40 p-3 sm:p-3.5 rounded-xl border border-white/5 flex flex-col justify-between min-w-0">
               <div className="flex items-center justify-between mb-1 gap-1">
                 <span className="text-[9px] sm:text-[10px] font-mono text-[#e2bfb0]/60 uppercase leading-tight">
-                  Mes
+                   Entrenamientos del Mes
                 </span>
                 <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
                   fitness_center
@@ -151,7 +152,7 @@ export const Progreso = () => {
             <div className="bg-black/40 p-3 sm:p-3.5 rounded-xl border border-white/5 flex flex-col justify-between min-w-0">
               <div className="flex items-center justify-between mb-1 gap-1">
                 <span className="text-[9px] sm:text-[10px] font-mono text-[#e2bfb0]/60 uppercase leading-tight">
-                  Calorías
+                  Promedio Calorías
                 </span>
                 <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
                   local_fire_department
@@ -165,7 +166,7 @@ export const Progreso = () => {
             <div className="bg-black/40 p-3 sm:p-3.5 rounded-xl border border-white/5 flex flex-col justify-between min-w-0">
               <div className="flex items-center justify-between mb-1 gap-1">
                 <span className="text-[9px] sm:text-[10px] font-mono text-[#e2bfb0]/60 uppercase leading-tight">
-                  Proteína
+                  Promedio Proteína
                 </span>
                 <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
                   restaurant
@@ -179,7 +180,7 @@ export const Progreso = () => {
             <div className="col-span-2 bg-black/40 p-3 sm:p-3.5 rounded-xl border border-white/5 flex items-center justify-between gap-2 min-w-0">
               <div className="min-w-0">
                 <span className="text-[9px] sm:text-[10px] font-mono text-[#e2bfb0]/60 uppercase block mb-0.5 leading-tight">
-                  Mejor Duración
+                  Mejor Duración de Entrenamiento
                 </span>
                 <p className="text-base sm:text-lg font-black text-white truncate">
                   {mejorDuracion} <span className="text-xs text-[#ff6b00] font-normal">minutos</span>

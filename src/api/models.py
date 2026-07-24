@@ -29,7 +29,7 @@ class Usuario(db.Model):
     nombre: Mapped[str] = mapped_column("Nombre", String(50), nullable=False)
     correo: Mapped[str] = mapped_column("Correo", String(80), unique=True, nullable=False)
     password: Mapped[str] = mapped_column("password", String(200), nullable=False)
-    url_foto: Mapped[str] = mapped_column("urlFoto", String(100), nullable=False)
+    url_foto: Mapped[str] = mapped_column("urlFoto", String(255), nullable=False)
     altura: Mapped[float] = mapped_column("Altura", Numeric(5, 2), nullable=False)
     objetivo: Mapped[str] = mapped_column("Objetivo", String(100), nullable=False)
     peso_deseado: Mapped[float] = mapped_column("PesoDeseado", Numeric(5, 2), nullable=False)

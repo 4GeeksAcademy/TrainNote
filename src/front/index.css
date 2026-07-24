@@ -1,28 +1,38 @@
-  @import "tailwindcss";
+@import "tailwindcss";
 
-  @layer base {
-    body {
-      background-color: #131313;
-      color: #e5e2e1;
-      font-family: 'Geist', sans-serif;
-    }
+@layer base {
+  html {
+    font-size: 16px; 
   }
 
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  body {
+    background-color: #131313;
+    color: #e5e2e1;
+    font-family: 'Geist', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
   }
 
-  ::-webkit-scrollbar-track {
-    background: #131313;
+   input, select, textarea, button, label {
+    font-size: inherit; 
   }
+}
 
-  ::-webkit-scrollbar-thumb {
-    background: #202020;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 107, 0, 0.2);
-  }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: #ff6b00;
-  }
+::-webkit-scrollbar-track {
+  background: #131313;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #202020;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 107, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff6b00;
+}
