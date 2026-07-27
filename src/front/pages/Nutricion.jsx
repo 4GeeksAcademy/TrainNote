@@ -6,11 +6,14 @@ import { NutritionQuickForm } from "../components/NutritionQuickForm";
 import { NutritionHistoryCard } from "../components/NutritionHistoryCard";
 import { getFechaLocal } from "../utils/dateHelpers";
 
+const DEFAULT_ATHLETE_AVATAR =
+  "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=400&auto=format&fit=crop";
+
 export const Nutricion = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
- const hoy = getFechaLocal();
+  const hoy = getFechaLocal();
   const primerDiaMes = hoy.slice(0, 8) + "01";
 
   const [desde, setDesde] = useState(primerDiaMes);
@@ -27,12 +30,28 @@ export const Nutricion = () => {
       payload: { show: false, message: "", type: "" }
     });
     actions.getNutrition(dispatch, store, desde, hasta);
-  }, []);
+  }, [dispatch, navigate]);
 
   const user = store.user || JSON.parse(localStorage.getItem("tn_user_data") || "{}");
   const userName = user?.Nombre || user?.nombre || "Atleta";
 
-  // REGISTRAR NUTRICIÓN
+  // FOTO DE PERFIL PARA EL HEADER
+  const rawAvatar =
+    user?.urlFoto ||
+    user?.url_foto ||
+    user?.avatar_url ||
+    user?.imagen ||
+    "";
+
+  const isValidAvatar =
+    rawAvatar &&
+    rawAvatar.trim() !== "" &&
+    rawAvatar !== "default.png" &&
+    !rawAvatar.endsWith("/default.png");
+
+  const headerAvatar = isValidAvatar ? rawAvatar : DEFAULT_ATHLETE_AVATAR;
+
+  // REGISTRAR NUTRICION
   const handleRegistrarNutricion = async (payload) => {
     const ok = await actions.registerNutrition(dispatch, store, payload);
     if (ok) {
@@ -71,7 +90,7 @@ export const Nutricion = () => {
         <header className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 pl-10 lg:pl-0 border-b border-white/5">
           <div className="min-w-0">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold uppercase tracking-tight text-white leading-tight break-words">
-              CONTROL DE <span className="text-[#ff6b00]">NUTRICIÓN</span>
+              CONTROL DE <span className="text-[#ff6b00]">NUTRICION</span>
             </h2>
             <p className="text-[10px] sm:text-[11px] font-mono text-[#e2bfb0]/60">
               REGISTRO Y SEGUIMIENTO DE MACROS Y ALIMENTACIÓN
@@ -79,9 +98,13 @@ export const Nutricion = () => {
           </div>
 
           <div className="flex items-center gap-3 bg-[#1a1a1a]/65 border border-white/10 px-3 py-1.5 rounded-xl w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
-              account_circle
-            </span>
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#ff6b00]/40 shrink-0">
+              <img
+                src={headerAvatar}
+                alt="Foto de perfil"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-white uppercase truncate">{userName}</p>
               <p className="text-[9px] font-mono text-[#ff6b00] truncate">
@@ -91,7 +114,7 @@ export const Nutricion = () => {
           </div>
         </header>
 
-        {/* SECCIÓN PRINCIPAL */}
+        {/* SECCION PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
           <div className="lg:col-span-1 min-w-0">
             <NutritionQuickForm onSubmit={handleRegistrarNutricion} loading={store.loading} />

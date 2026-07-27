@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 
 export const PersonalDataForm = ({ user, onSubmit }) => {
   const [nombre, setNombre] = useState("");
-  const [objetivo, setObjetivo] = useState("Rendimiento Atlético");
+  const [objetivo, setObjetivo] = useState("");
   const [altura, setAltura] = useState("");
   const [pesoDeseado, setPesoDeseado] = useState("");
 
   useEffect(() => {
     if (user) {
       setNombre(user.Nombre || user.nombre || "");
-      setObjetivo(user.Objetivo || user.objetivo || "Rendimiento Atlético");
+      setObjetivo(user.Objetivo || user.objetivo || "");
       setAltura(user.Altura || user.altura || "");
       setPesoDeseado(user.PesoDeseado || user.peso_deseado || "");
     }
@@ -50,7 +50,9 @@ export const PersonalDataForm = ({ user, onSubmit }) => {
             value={objetivo}
             onChange={(e) => setObjetivo(e.target.value)}
             className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
+            required
           >
+            <option value="" disabled className="bg-[#1a1a1a] text-[#e2bfb0]/60">Seleccione objetivo</option>
             <option value="Hipertrofia Muscular" className="bg-[#1a1a1a] text-white">Hipertrofia Muscular</option>
             <option value="Pérdida de Grasa" className="bg-[#1a1a1a] text-white">Pérdida de Grasa</option>
             <option value="Rendimiento Atlético" className="bg-[#1a1a1a] text-white">Rendimiento Atlético</option>

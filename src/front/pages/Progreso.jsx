@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { actions } from "../store";
 import { WeightChart } from "../components/WeightChart";
-import { getFechaLocal } from "../utils/dateHelpers";
+
+const DEFAULT_ATHLETE_AVATAR =
+  "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=400&auto=format&fit=crop";
 
 export const Progreso = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -26,13 +28,30 @@ export const Progreso = () => {
 
     actions.getProgressSummary(dispatch, store);
     actions.getProgressWeight(dispatch, store, fechaDesde, fechaHasta);
-  }, []);
+  }, [dispatch, navigate]);
 
   const summary = store.progressSummary || {};
   const weightData = store.progressWeight || [];
   const userData = store.user || JSON.parse(localStorage.getItem("tn_user_data") || "{}");
 
   const userName = userData.Nombre || userData.nombre || "Atleta";
+
+  // FOTO DE PERFIL PARA EL HEADER
+  const rawAvatar =
+    userData?.urlFoto ||
+    userData?.url_foto ||
+    userData?.avatar_url ||
+    userData?.imagen ||
+    "";
+
+  const isValidAvatar =
+    rawAvatar &&
+    rawAvatar.trim() !== "" &&
+    rawAvatar !== "default.png" &&
+    !rawAvatar.endsWith("/default.png");
+
+  const headerAvatar = isValidAvatar ? rawAvatar : DEFAULT_ATHLETE_AVATAR;
+
   const pesoInicial = summary.peso_inicial ?? "--";
   const pesoActual = summary.peso_actual ?? "--";
   const pesoDeseado = summary.peso_deseado ?? "--";
@@ -58,9 +77,13 @@ export const Progreso = () => {
         </div>
 
         <div className="flex items-center gap-3 bg-[#1a1a1a]/60 border border-white/10 px-3 py-1.5 rounded-xl w-full sm:w-auto shrink-0">
-          <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
-            account_circle
-          </span>
+          <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#ff6b00]/40 shrink-0">
+            <img
+              src={headerAvatar}
+              alt="Foto de perfil"
+              className="w-full h-full object-cover"
+            />
+          </div>
           <div className="min-w-0">
             <p className="text-xs font-bold text-white uppercase truncate">{userName}</p>
             <p className="text-[9px] font-mono text-[#ff6b00] truncate">
@@ -109,9 +132,9 @@ export const Progreso = () => {
         </div>
       </div>
 
-      {/* MÉTRICAS Y GRÁFICO */}
+      {/* METRICAS Y GRAFICO */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        {/* MÉTRICAS DE RENDIMIENTO */}
+        {/* METRICAS DE RENDIMIENTO */}
         <div className="lg:col-span-4 bg-[#1a1a1a]/60 backdrop-blur-md border border-white/10 p-4 sm:p-5 rounded-xl flex flex-col justify-between min-w-0">
           <div className="flex items-center gap-2 border-b border-white/5 pb-3">
             <span className="material-symbols-outlined text-[#ff6b00] text-base">bolt</span>
@@ -138,7 +161,7 @@ export const Progreso = () => {
             <div className="bg-black/40 p-3 sm:p-3.5 rounded-xl border border-white/5 flex flex-col justify-between min-w-0">
               <div className="flex items-center justify-between mb-1 gap-1">
                 <span className="text-[9px] sm:text-[10px] font-mono text-[#e2bfb0]/60 uppercase leading-tight">
-                   Entrenamientos del Mes
+                  Entrenamientos del Mes
                 </span>
                 <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
                   fitness_center
@@ -193,7 +216,7 @@ export const Progreso = () => {
           </div>
         </div>
 
-        {/* GRÁFICO */}
+        {/* GRAFICO */}
         <div className="lg:col-span-8 flex items-center bg-[#1a1a1a]/40 border border-white/10 rounded-xl p-2 w-full min-w-0 overflow-hidden">
           <WeightChart weightData={weightData} />
         </div>

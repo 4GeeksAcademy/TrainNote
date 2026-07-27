@@ -1,17 +1,25 @@
 import React from "react";
+import logo from "../assets/img/trainnote-mascot-transparent.png";
 
 export const BentoGrid = () => {
   return (
     <div className="lg:col-span-5 flex flex-col justify-between gap-6">
       
       <div className="bg-[#1a1a1a]/60 backdrop-blur-md border border-white/10 rounded-2xl p-8 flex flex-col gap-4 shadow-2xl hover:border-[#ff6b00]/30 transition-all duration-300">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-[#ff6b00] rounded-xl flex items-center justify-center shadow-[0_0_20px_#ff6b00]">
-            <span className="material-symbols-outlined text-white text-3xl">bolt</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-[#ff6b00] rounded-xl flex items-center justify-center shadow-[0_0_20px_#ff6b00]">
+              <span className="material-symbols-outlined text-white text-3xl">bolt</span>
+            </div>
+            <h1 className="font-extrabold text-4xl text-white uppercase tracking-tighter">
+              Trainnote
+            </h1>
           </div>
-          <h1 className="font-extrabold text-4xl text-white uppercase tracking-tighter">
-            Trainnote
-          </h1>
+          <img
+            src={logo}
+            alt="Trainnote mascot"
+            className="h-16 sm:h-20 w-auto object-contain shrink-0"
+          />
         </div>
         <p className="text-2xl text-[#e2bfb0] font-semibold leading-tight">
           Forma tu mejor versión

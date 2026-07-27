@@ -8,6 +8,9 @@ import { PlanHistoryCard } from "../components/PlanHistoryCard";
 import { PlanResultModal } from "../components/PlanResultModal";
 import { getFechaLocal } from "../utils/dateHelpers";
 
+const DEFAULT_ATHLETE_AVATAR =
+  "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=400&auto=format&fit=crop";
+
 export const PlanIA = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
@@ -32,10 +35,26 @@ export const PlanIA = () => {
       payload: { show: false, message: "", type: "" }
     });
     actions.getPlans(dispatch, store, desde, hasta);
-  }, []);
+  }, [dispatch, navigate]);
 
   const user = store.user || JSON.parse(localStorage.getItem("tn_user_data") || "{}");
   const userName = user?.Nombre || user?.nombre || "Atleta";
+
+  // FOTO DE PERFIL PARA EL HEADER
+  const rawAvatar =
+    user?.urlFoto ||
+    user?.url_foto ||
+    user?.avatar_url ||
+    user?.imagen ||
+    "";
+
+  const isValidAvatar =
+    rawAvatar &&
+    rawAvatar.trim() !== "" &&
+    rawAvatar !== "default.png" &&
+    !rawAvatar.endsWith("/default.png");
+
+  const headerAvatar = isValidAvatar ? rawAvatar : DEFAULT_ATHLETE_AVATAR;
 
   // GENERAR NUEVO PLAN CON IA
   const handleGenerarPlan = async (payload) => {
@@ -95,9 +114,13 @@ export const PlanIA = () => {
           </div>
 
           <div className="flex items-center gap-3 bg-[#1a1a1a]/65 border border-white/10 px-3 py-1.5 rounded-xl w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[#ff6b00] text-sm shrink-0">
-              account_circle
-            </span>
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#ff6b00]/40 shrink-0">
+              <img
+                src={headerAvatar}
+                alt="Foto de perfil"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-white uppercase truncate">{userName}</p>
               <p className="text-[9px] font-mono text-[#ff6b00] truncate">
@@ -107,7 +130,7 @@ export const PlanIA = () => {
           </div>
         </header>
 
-        {/* SECCIÓN PRINCIPAL */}
+        {/* SECCION PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
           <div className="lg:col-span-1 min-w-0 flex flex-col">
             <PlanConfiguratorCard onGenerate={handleGenerarPlan} loading={store.loading} resetTrigger={resetKey} />

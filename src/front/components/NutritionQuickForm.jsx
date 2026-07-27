@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { getFechaLocal } from "../utils/dateHelpers";
+
 export const NutritionQuickForm = ({ onSubmit, loading }) => {
   const hoy = getFechaLocal();
 
   const [fecha, setFecha] = useState(hoy);
   const [nombreDeLaComida, setNombreDeLaComida] = useState("");
-  const [tipoDeComida, setTipoDeComida] = useState("DESAYUNO");
+  const [tipoDeComida, setTipoDeComida] = useState("");
   const [calorias, setCalorias] = useState("");
   const [proteinasG, setProteinasG] = useState("");
   const [carbohidratosG, setCarbohidratosG] = useState("");
   const [grasasG, setGrasasG] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,19 +19,24 @@ export const NutritionQuickForm = ({ onSubmit, loading }) => {
       fecha,
       nombre_de_la_comida: nombreDeLaComida,
       tipo_de_comida: tipoDeComida,
-      calorías: parseFloat(calorias) || 0,
-      proteínas_g: parseFloat(proteinasG) || 0,
+      calorias: parseFloat(calorias) || 0, // Clave corregida sin acento
+      proteinas_g: parseFloat(proteinasG) || 0,
       carbohidratos_g: parseFloat(carbohidratosG) || 0,
       grasas_g: parseFloat(grasasG) || 0,
     };
 
-    const ok = await onSubmit(payload);
-    if (ok) {
-      setNombreDeLaComida("");
-      setCalorias("");
-      setProteinasG("");
-      setCarbohidratosG("");
-      setGrasasG("");
+    setIsSubmitting(true);
+    try {
+      const ok = await onSubmit(payload);
+      if (ok) {
+        setNombreDeLaComida("");
+        setCalorias("");
+        setProteinasG("");
+        setCarbohidratosG("");
+        setGrasasG("");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -70,8 +77,10 @@ export const NutritionQuickForm = ({ onSubmit, loading }) => {
           <select
             value={tipoDeComida}
             onChange={(e) => setTipoDeComida(e.target.value)}
-            className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono uppercase"
+            className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
+            required
           >
+            <option value="" disabled className="bg-[#1a1a1a] text-[#e2bfb0]/60">Seleccionar tipo de comida</option>
             <option value="DESAYUNO" className="bg-[#1a1a1a] text-white">Desayuno</option>
             <option value="ALMUERZO" className="bg-[#1a1a1a] text-white">Almuerzo</option>
             <option value="CENA" className="bg-[#1a1a1a] text-white">Cena</option>
@@ -139,10 +148,13 @@ export const NutritionQuickForm = ({ onSubmit, loading }) => {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-[#ff6b00] hover:bg-[#ff6b00]/90 disabled:opacity-50 text-white font-extrabold text-[11px] font-mono uppercase tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_12px_rgba(255,107,0,0.3)] transition-all cursor-pointer mt-1"
+          disabled={isSubmitting || loading}
+          className="w-full bg-[#ff6b00] hover:bg-[#ff6b00]/90 disabled:opacity-50 text-white font-extrabold text-[11px] font-mono uppercase tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_12px_rgba(255,107,0,0.3)] transition-all cursor-pointer mt-1 flex items-center justify-center gap-2"
         >
-          {loading ? "Guardando..." : "Guardar Registro"}
+          {isSubmitting && (
+            <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          )}
+          {isSubmitting ? "Guardando..." : "Guardar Registro"}
         </button>
       </form>
     </div>

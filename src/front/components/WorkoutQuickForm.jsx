@@ -2,41 +2,53 @@ import React, { useState, useEffect } from "react";
 import { actions } from "../store";
 import { getFechaLocal } from "../utils/dateHelpers";
 
+// Helper to create empty exercise row with a stable key
+const createEmptyExercise = () => ({
+  id: crypto.randomUUID(),
+  nombre_ejercicio: "",
+  series: "",
+  repeticiones: "",
+  peso_kg: ""
+});
+
 export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
- const hoy = getFechaLocal();
+  const hoy = getFechaLocal();
 
   const [fecha, setFecha] = useState(hoy);
   const [duracionMinutos, setDuracionMinutos] = useState("");
   const [notas, setNotas] = useState("");
-  const [listaEjercicios, setListaEjercicios] = useState([
-    { nombre_ejercicio: "", series: "", repeticiones: "", peso_kg: "" }
-  ]);
+  const [listaEjercicios, setListaEjercicios] = useState([createEmptyExercise()]);
   const [ejerciciosDisponibles, setEjerciciosDisponibles] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const cargarEjercicios = async () => {
       const data = await actions.getExercises(dispatch, store);
-      if (data) setEjerciciosDisponibles(data);
+      if (data && isMounted) setEjerciciosDisponibles(data);
     };
     cargarEjercicios();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAgregarFila = () => {
-    setListaEjercicios([
-      ...listaEjercicios,
-      { nombre_ejercicio: "", series: "", repeticiones: "", peso_kg: "" }
-    ]);
+    setListaEjercicios((prev) => [...prev, createEmptyExercise()]);
   };
 
   const handleEliminarFila = (index) => {
-    const nuevaLista = listaEjercicios.filter((_, i) => i !== index);
-    setListaEjercicios(nuevaLista);
+    setListaEjercicios((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleCambioEjercicio = (index, campo, valor) => {
-    const nuevaLista = [...listaEjercicios];
-    nuevaLista[index][campo] = valor;
-    setListaEjercicios(nuevaLista);
+    setListaEjercicios((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [campo]: valor } : item
+      )
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -53,11 +65,16 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
       }))
     };
 
-    const ok = await onSubmit(payload);
-    if (ok) {
-      setDuracionMinutos("");
-      setNotas("");
-      setListaEjercicios([{ nombre_ejercicio: "", series: "", repeticiones: "", peso_kg: "" }]);
+    setIsSubmitting(true);
+    try {
+      const ok = await onSubmit(payload);
+      if (ok) {
+        setDuracionMinutos("");
+        setNotas("");
+        setListaEjercicios([createEmptyExercise()]);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -65,8 +82,12 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
     <div className="bg-[#1a1a1a]/65 backdrop-blur-md border border-white/10 p-4 sm:p-5 rounded-xl shadow-xl">
       <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-3">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[#ff6b00] text-base">fitness_center</span>
-          <h3 className="text-xs font-mono font-bold uppercase text-white tracking-widest">Registrar Entrenamiento</h3>
+          <span className="material-symbols-outlined text-[#ff6b00] text-base">
+            fitness_center
+          </span>
+          <h3 className="text-xs font-mono font-bold uppercase text-white tracking-widest">
+            Registrar Entrenamiento
+          </h3>
         </div>
         <button
           type="button"
@@ -80,7 +101,9 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Fecha</label>
+            <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">
+              Fecha
+            </label>
             <input
               type="date"
               value={fecha}
@@ -91,7 +114,9 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
             />
           </div>
           <div>
-            <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Duración (Minutos)</label>
+            <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">
+              Duración (Minutos)
+            </label>
             <input
               type="number"
               min="1"
@@ -105,7 +130,9 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
         </div>
 
         <div>
-          <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Nombre de Rutina / Notas</label>
+          <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">
+            Nombre de Rutina / Notas
+          </label>
           <input
             type="text"
             placeholder="Ej: Empuje (Push) A - Hipertrofia"
@@ -117,28 +144,40 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
         </div>
 
         <div className="space-y-3 mt-1">
-          <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block">Ejercicios Realizados</label>
+          <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block">
+            Ejercicios Realizados
+          </label>
           {listaEjercicios.map((item, index) => (
-            <div key={index} className="bg-black/50 border border-white/10 p-3 rounded-lg space-y-2.5">
-              
-              {/* Línea 1: Selector de ejercicio completo */}
+            <div
+              key={item.id}
+              className="bg-black/50 border border-white/10 p-3 rounded-lg space-y-2.5"
+            >
+              {/* Línea 1: Selector de ejercicio */}
               <div>
                 <select
                   value={item.nombre_ejercicio}
-                  onChange={(e) => handleCambioEjercicio(index, "nombre_ejercicio", e.target.value)}
+                  onChange={(e) =>
+                    handleCambioEjercicio(index, "nombre_ejercicio", e.target.value)
+                  }
                   className="w-full bg-black/80 border border-white/20 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] font-mono"
                   required
                 >
-                  <option value="" className="text-gray-400">Seleccionar ejercicio</option>
+                  <option value="" className="text-gray-400">
+                    Seleccionar ejercicio
+                  </option>
                   {ejerciciosDisponibles.map((ej) => (
-                    <option key={ej.EjercicioID} value={ej.Nombre} className="bg-[#1a1a1a] text-white">
+                    <option
+                      key={ej.EjercicioID}
+                      value={ej.Nombre}
+                      className="bg-[#1a1a1a] text-white"
+                    >
                       {ej.Nombre}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Línea 2: Inputs numéricos y botón de borrar */}
+              {/* Línea 2: Inputs numéricos y borrar */}
               <div className="grid grid-cols-4 gap-2 items-center">
                 <div>
                   <input
@@ -146,7 +185,9 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
                     min="1"
                     placeholder="Sets"
                     value={item.series}
-                    onChange={(e) => handleCambioEjercicio(index, "series", e.target.value)}
+                    onChange={(e) =>
+                      handleCambioEjercicio(index, "series", e.target.value)
+                    }
                     className="w-full bg-black/80 border border-white/20 rounded-lg px-2 py-2 text-xs text-white text-center focus:outline-none focus:border-[#ff6b00] font-mono"
                     required
                   />
@@ -158,7 +199,9 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
                     min="1"
                     placeholder="Reps"
                     value={item.repeticiones}
-                    onChange={(e) => handleCambioEjercicio(index, "repeticiones", e.target.value)}
+                    onChange={(e) =>
+                      handleCambioEjercicio(index, "repeticiones", e.target.value)
+                    }
                     className="w-full bg-black/80 border border-white/20 rounded-lg px-2 py-2 text-xs text-white text-center focus:outline-none focus:border-[#ff6b00] font-mono"
                     required
                   />
@@ -171,7 +214,9 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
                     min="0"
                     placeholder="Kg"
                     value={item.peso_kg}
-                    onChange={(e) => handleCambioEjercicio(index, "peso_kg", e.target.value)}
+                    onChange={(e) =>
+                      handleCambioEjercicio(index, "peso_kg", e.target.value)
+                    }
                     className="w-full bg-black/80 border border-white/20 rounded-lg px-2 py-2 text-xs text-white text-center focus:outline-none focus:border-[#ff6b00] font-mono"
                     required
                   />
@@ -184,24 +229,28 @@ export const WorkoutQuickForm = ({ onSubmit, loading, dispatch, store }) => {
                       onClick={() => handleEliminarFila(index)}
                       className="text-[#e2bfb0]/60 hover:text-[#ffb4ab] transition-colors cursor-pointer p-1.5 bg-white/5 rounded-lg border border-white/10 w-full flex items-center justify-center"
                     >
-                      <span className="material-symbols-outlined text-base">delete</span>
+                      <span className="material-symbols-outlined text-base">
+                        delete
+                      </span>
                     </button>
                   ) : (
                     <div className="w-full"></div>
                   )}
                 </div>
               </div>
-
             </div>
           ))}
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-[#ff6b00] hover:bg-[#ff6b00]/90 disabled:opacity-50 text-white font-extrabold text-[11px] font-mono uppercase tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_12px_rgba(255,107,0,0.3)] transition-all cursor-pointer mt-2"
+          disabled={isSubmitting || loading}
+          className="w-full bg-[#ff6b00] hover:bg-[#ff6b00]/90 disabled:opacity-50 text-white font-extrabold text-[11px] font-mono uppercase tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_12px_rgba(255,107,0,0.3)] transition-all cursor-pointer mt-2 flex items-center justify-center gap-2"
         >
-          {loading ? "Guardando..." : "Guardar Entrenamiento"}
+          {isSubmitting && (
+            <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          )}
+          {isSubmitting ? "Guardando..." : "Guardar Entrenamiento"}
         </button>
       </form>
     </div>

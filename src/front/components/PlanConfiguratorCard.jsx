@@ -3,35 +3,33 @@ import React, { useState, useEffect } from "react";
 export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
   const [tipoPlan, setTipoPlan] = useState("ENTRENAMIENTO");
 
-  const [nivel, setNivel] = useState("Avanzado");
+  const [nivel, setNivel] = useState("");
   const [diasPorSemana, setDiasPorSemana] = useState("");
   const [minutosSesion, setMinutosSesion] = useState("");
   const [equipamiento, setEquipamiento] = useState("");
-  const [enfoquePrincipal, setEnfoquePrincipal] = useState("");
+  const [notaEntrenamiento, setNotaEntrenamiento] = useState("");
   const [lesiones, setLesiones] = useState("");
 
   const [edad, setEdad] = useState("");
   const [pesoActualKg, setPesoActualKg] = useState("");
   const [alturaCm, setAlturaCm] = useState("");
-  const [nivelActividad, setNivelActividad] = useState("Alta");
+  const [nivelActividad, setNivelActividad] = useState("");
   const [comidasAlDia, setComidasAlDia] = useState("");
-  const [preferenciasDieteticas, setPreferenciasDieteticas] = useState("");
-  const [caloriasObjetivo, setCaloriasObjetivo] = useState("");
+  const [notaNutricion, setNotaNutricion] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  
   useEffect(() => {
     if (resetTrigger) {
       setDiasPorSemana("");
       setMinutosSesion("");
       setEquipamiento("");
-      setEnfoquePrincipal("");
+      setNotaEntrenamiento("");
       setLesiones("");
       setEdad("");
       setPesoActualKg("");
       setAlturaCm("");
       setComidasAlDia("");
-      setPreferenciasDieteticas("");
-      setCaloriasObjetivo("");
+      setNotaNutricion("");
     }
   }, [resetTrigger]);
 
@@ -46,7 +44,7 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
             dias_por_semana: parseInt(diasPorSemana) || 0,
             minutos_sesion: parseInt(minutosSesion) || 0,
             equipamiento,
-            enfoque_principal: enfoquePrincipal,
+            nota: notaEntrenamiento,
             lesiones_o_limitaciones: lesiones || "Ninguna",
           }
         : {
@@ -56,11 +54,15 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
             altura_cm: parseFloat(alturaCm) || 0,
             nivel_actividad: nivelActividad,
             comidas_al_dia: parseInt(comidasAlDia) || 0,
-            preferencias_dieteticas: preferenciasDieteticas,
-            calorias_objetivo: parseInt(caloriasObjetivo) || 0,
+            nota: notaNutricion || "Ninguna",
           };
 
-    await onGenerate(payload);
+    setIsSubmitting(true);
+    try {
+      await onGenerate(payload);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -107,7 +109,9 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
                 value={nivel}
                 onChange={(e) => setNivel(e.target.value)}
                 className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
+                required
               >
+                <option value="" disabled className="bg-[#1a1a1a] text-[#e2bfb0]/60">Seleccionar nivel de atleta</option>
                 <option value="Principiante" className="bg-[#1a1a1a] text-white">Principiante</option>
                 <option value="Intermedio" className="bg-[#1a1a1a] text-white">Intermedio</option>
                 <option value="Avanzado" className="bg-[#1a1a1a] text-white">Avanzado</option>
@@ -156,13 +160,13 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
             </div>
 
             <div>
-              <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Enfoque Principal</label>
-              <input
-                type="text"
-                placeholder="Ej: Hipertrofia, Fuerza"
-                value={enfoquePrincipal}
-                onChange={(e) => setEnfoquePrincipal(e.target.value)}
-                className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
+              <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Nota</label>
+              <textarea
+                placeholder="Ej: Quiero enfocarme en hipertrofia y fuerza de tren superior"
+                value={notaEntrenamiento}
+                onChange={(e) => setNotaEntrenamiento(e.target.value)}
+                rows={3}
+                className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono resize-none"
                 required
               />
             </div>
@@ -221,7 +225,7 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Comidas/Día</label>
+                <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Comidas/Días</label>
                 <input
                   type="number"
                   min="1"
@@ -241,7 +245,9 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
                 value={nivelActividad}
                 onChange={(e) => setNivelActividad(e.target.value)}
                 className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
+                required
               >
+                <option value="" disabled className="bg-[#1a1a1a] text-[#e2bfb0]/60">Seleccionar nivel de actividad</option>
                 <option value="Baja" className="bg-[#1a1a1a] text-white">Baja</option>
                 <option value="Moderada" className="bg-[#1a1a1a] text-white">Moderada</option>
                 <option value="Alta" className="bg-[#1a1a1a] text-white">Alta</option>
@@ -249,27 +255,13 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
             </div>
 
             <div>
-              <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Preferencia Alimentaria</label>
-              <input
-                type="text"
-                placeholder="Ej: Alta en proteína"
-                value={preferenciasDieteticas}
-                onChange={(e) => setPreferenciasDieteticas(e.target.value)}
-                className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Calorías Objetivo</label>
-              <input
-                type="number"
-                min="500"
-                step="50"
-                placeholder="Ej: 2500"
-                value={caloriasObjetivo}
-                onChange={(e) => setCaloriasObjetivo(e.target.value)}
-                className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
-                required
+              <label className="text-[10px] font-mono text-[#e2bfb0]/80 uppercase tracking-wider block mb-1">Nota</label>
+              <textarea
+                placeholder="Ej: Prefiero comidas altas en proteínas, sin lácteos"
+                value={notaNutricion}
+                onChange={(e) => setNotaNutricion(e.target.value)}
+                rows={3}
+                className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono resize-none"
               />
             </div>
           </>
@@ -277,11 +269,15 @@ export const PlanConfiguratorCard = ({ onGenerate, loading, resetTrigger }) => {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isSubmitting || loading}
           className="w-full bg-[#ff6b00] hover:bg-[#ff6b00]/90 disabled:opacity-50 text-white font-extrabold text-[11px] font-mono uppercase tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_12px_rgba(255,107,0,0.3)] transition-all cursor-pointer mt-1 flex items-center justify-center gap-2"
         >
-          <span className="material-symbols-outlined text-sm">bolt</span>
-          {loading ? "Generando..." : "Generar Protocolo"}
+          {isSubmitting ? (
+            <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          ) : (
+            <span className="material-symbols-outlined text-sm">bolt</span>
+          )}
+          {isSubmitting ? "Generando..." : "Generar Protocolo"}
         </button>
       </form>
     </div>

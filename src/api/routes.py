@@ -50,6 +50,21 @@ def fecha_venezuela_hoy():
   """Devuelve la fecha calendario actual en Venezuela, sin importar la zona horaria del servidor."""
   return datetime.now(VENEZUELA_TZ).date()
 
+
+def ahora_venezuela():
+  """Devuelve el datetime actual (aware) en la zona horaria de Venezuela."""
+  return datetime.now(VENEZUELA_TZ)
+
+
+def ahora_venezuela_naive():
+  """Devuelve el datetime actual de Venezuela como 'naive' (sin tzinfo).
+
+  Se usa para guardar/comparar contra columnas de la base de datos que son
+  DateTime sin zona horaria, evitando el TypeError de comparar un datetime
+  aware con uno naive.
+  """
+  return datetime.now(VENEZUELA_TZ).replace(tzinfo=None)
+
 # ==========================================
 # UTILIDADES CONEXION CON GEMINIS
 # ==========================================
@@ -238,12 +253,7 @@ def parsear_rango_fechas(request_args):
 # ==========================================
 # UTILIDADES ENVIO DE CORREO CON GMAIL
 # ==========================================
-from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
-import os
-import smtplib
 
 
 def enviar_correo_smtp(destinatario, codigo):
@@ -253,23 +263,24 @@ def enviar_correo_smtp(destinatario, codigo):
   if not remitente or not password_app:
     return False
 
-  # Obtener fecha y hora actual formateada
-  ahora = datetime.now()
+  # Obtener fecha y hora actual formateada (hora de Venezuela)
+  ahora = ahora_venezuela()
   fecha_hora_asunto = ahora.strftime("%d/%m/%Y a las %H:%M")
-
 
   mensaje = MIMEMultipart("alternative")
   mensaje["From"] = f"TrainNote <{remitente}>"
   mensaje["To"] = destinatario
   mensaje["Reply-To"] = remitente
   mensaje["Subject"] = f"Código de Recuperación - TrainNote [{fecha_hora_asunto}]"
-  mensaje["Date"] = formatdate(localtime=True)
+  # El header Date se genera a partir de "ahora" (Venezuela) para que sea
+  # consistente con la fecha/hora mostrada en el asunto y el cuerpo del correo.
+  mensaje["Date"] = formatdate(timeval=ahora.timestamp(), localtime=False)
   mensaje["Message-ID"] = make_msgid(domain="trainnote.com")
 
   texto_plano = f"""
 Hola:
 
-Has solicitado restablecer tu contraseña en TrainNote el {fecha_hora_asunto}.
+Has solicitado restablecer tu contraseña en TrainNote el {fecha_hora_asunto} (hora de Venezuela).
 
 Tu código de seguridad es: {codigo}
 
@@ -290,7 +301,7 @@ El equipo de TrainNote.
     <h2 style="color: #2c3e50; text-align: center; margin-top: 0;">TrainNote</h2>
     <hr style="border: none; border-top: 1px solid #eeeeee; margin: 20px 0;">
     <p>Hola,</p>
-    <p>Has solicitado restablecer tu contraseña para tu cuenta de <strong>TrainNote</strong> el <em>{fecha_hora_asunto}</em>.</p>
+    <p>Has solicitado restablecer tu contraseña para tu cuenta de <strong>TrainNote</strong> el <em>{fecha_hora_asunto}</em> (hora de Venezuela).</p>
     <p>Utiliza el siguiente código de verificación de 6 dígitos:</p>
     
     <div style="text-align: center; margin: 25px 0;">
@@ -437,7 +448,7 @@ def request_code():
     )
 
   codigo_aleatorio = "".join([str(random.randint(0, 9)) for _ in range(6)])
-  now = datetime.utcnow()
+  now = ahora_venezuela_naive()
   expiration = now + timedelta(minutes=15)
 
   codigos_previos = CodigoRecuperacion.query.filter_by(
@@ -491,7 +502,7 @@ def verify_code():
   if not registro_codigo:
     return jsonify({"error": "Código inválido o ya utilizado."}), 400
 
-  if datetime.utcnow() > registro_codigo.fecha_expiracion:
+  if ahora_venezuela_naive() > registro_codigo.fecha_expiracion:
     registro_codigo.estatus = EstatusEnum.EXPIRADO
     db.session.commit()
     return jsonify({"error": "El código ha expirado."}), 400
@@ -527,7 +538,7 @@ def reset_password():
       estatus=EstatusEnum.ACTIVO,
   ).first()
 
-  if not registro_codigo or datetime.utcnow() > registro_codigo.fecha_expiracion:
+  if not registro_codigo or ahora_venezuela_naive() > registro_codigo.fecha_expiracion:
     return jsonify({"error": "Código inválido, usado o expirado."}), 400
 
   user.password = generate_password_hash(nuevo_password)
@@ -883,8 +894,8 @@ def create_nutrition():
   fecha_str = data.get("fecha")
   nombre = data.get("nombre_de_la_comida") or data.get("nombre")
   tipo = data.get("tipo_de_comida") or data.get("tipo_comida")
-  calorias = data.get("calorías") or data.get("caloria", 0)
-  proteinas = data.get("proteínas_g") or data.get("proteina", 0)
+  calorias = data.get("calorias") or data.get("caloria", 0)
+  proteinas = data.get("proteinas_g") or data.get("proteina", 0)
   carbos = data.get("carbohidratos_g") or data.get("carbohidrato", 0)
   grasas = data.get("grasas_g") or data.get("grasa", 0)
 
@@ -1231,7 +1242,7 @@ def create_plan():
         "dias_por_semana",
         "minutos_sesion",
         "equipamiento",
-        "enfoque_principal",
+        "nota",
     ]
     for field in req_fields:
       if not data.get(field):
@@ -1249,7 +1260,7 @@ def create_plan():
         Días disponibles por semana: {data.get('dias_por_semana')}
         Tiempo disponible por sesión: {data.get('minutos_sesion')} minutos
         Equipo disponible: {data.get('equipamiento')}
-        Enfoque principal: {data.get('enfoque_principal')}
+        Nota adicional: {data.get('nota')}
         Lesiones o limitaciones: {data.get('lesiones_o_limitaciones', 'Ninguna')}
 
         Sigue todas las reglas del formato estructurado y devuelve únicamente un JSON válido con la clave "tipo_plan": "training".
@@ -1264,7 +1275,6 @@ def create_plan():
         "altura_cm",
         "nivel_actividad",
         "comidas_al_dia",
-        "preferencias_dieteticas",
     ]
     for field in req_fields:
       if not data.get(field):
@@ -1284,11 +1294,11 @@ def create_plan():
         Altura: {data.get('altura_cm')} cm
         Nivel de actividad física: {data.get('nivel_actividad')}
         Número de comidas por día: {data.get('comidas_al_dia')}
-        Preferencia alimentaria: {data.get('preferencias_dieteticas')}
+        Nota adicional: {data.get('nota', 'Ninguna')}
         Alergias o restricciones: {data.get('alergias_restricciones', 'Ninguna')}
         Alimentos excluidos: {data.get('alimentos_excluidos', 'Ninguno')}
         Peso deseado: {user.peso_deseado} kg
-        Calorías objetivo: {data.get('calorias_objetivo', 'Calcular estimación aproximada')}
+        Calcula una estimación aproximada de calorías objetivo adecuada para el objetivo del usuario.
 
         Sigue todas las reglas del formato estructurado y devuelve únicamente un JSON válido con la clave "tipo_plan": "nutrition".
         """

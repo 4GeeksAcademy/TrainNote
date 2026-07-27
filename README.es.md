@@ -35,9 +35,29 @@ TrainNote también permite generar planes personalizados con inteligencia artifi
 
 ### Frontend
 
+- **React** — librería principal para la construcción de la interfaz.
+- **React Router DOM** — manejo de rutas y navegación.
+- **Tailwind CSS** — estilos y diseño responsivo.
+- **Recharts** — gráficos de evolución de peso y progreso.
+- **Material Symbols (Google Fonts)** — iconografía de la interfaz.
+- **Cloudinary** — almacenamiento y entrega de imágenes de perfil (subida de avatar).
+- **Context API / useReducer (patrón Flux)** — manejo del estado global de la aplicación.
+
 ### Backend
 
+- **Python 3**
+- **Flask** — framework principal del servidor y definición de rutas (Blueprints).
+- **Flask-SQLAlchemy** — ORM para el manejo de la base de datos.
+- **Flask-JWT-Extended** — autenticación y manejo de tokens JWT.
+- **Flask-CORS** — manejo de políticas de acceso entre frontend y backend.
+- **Werkzeug** — hashing y verificación segura de contraseñas.
+- **Google Gemini API (google-genai)** — generación de planes de entrenamiento y nutrición con IA.
+- **smtplib / Gmail SMTP** — envío de correos de recuperación de contraseña.
+- **Pipenv** — manejo de entorno virtual y dependencias.
+
 ### Base de datos
+
+- **PostgreSQL**
 
 ## Instalación
 
@@ -50,13 +70,35 @@ cd TrainNote
 
 ### 2. Instalar dependencias del backend
 
+```bash
+pipenv install
+```
 
 ### 3. Instalar dependencias del frontend
 
 ```bash
 npm install
 ```
+
 ### 4. Configurar variables de entorno
+
+Crear un archivo `.env` en la raíz del proyecto con las siguientes variables:
+
+```env
+# Backend
+GEMINI_API_KEY=tu_clave
+MAIL_USERNAME=tucorreo@gmail.com
+MAIL_PASSWORD=tu_clave
+JWT_SECRET_KEY=tu_clave
+
+# Frontend
+VITE_BASENAME=/
+VITE_BACKEND_URL=https://tu-backend-url
+BACKEND_URL=https://tu-backend-url
+VITE_CLOUDINARY_CLOUD_NAME=tu_clave
+```
+
+> **Nota:** `MAIL_PASSWORD` debe ser una [contraseña de aplicación de Google](https://support.google.com/accounts/answer/185833), no la contraseña normal de la cuenta de Gmail.
 
 ## Ejecutar el proyecto
 
@@ -71,8 +113,3 @@ Frontend:
 ```bash
 npm run start
 ```
-
-
-### 4. Configurar variables de entorno
-
-Crear un archivo `.env`:
