@@ -2,6 +2,7 @@ import React from "react";
 import { createHashRouter, createRoutesFromElements, Route, Outlet } from "react-router-dom";
 
 import { Home } from "./pages/Home.jsx";
+import { Landing } from "./pages/Landing.jsx";
 import { Perfil } from "./pages/Perfil.jsx";
 import { Entrenamiento } from "./pages/Entrenamiento.jsx";
 import { Nutricion } from "./pages/Nutricion.jsx";
@@ -28,7 +29,7 @@ export const router = createHashRouter(
   createRoutesFromElements(
     <Route path="/">
       {/* HOME INDEPENDIENTE (Pantalla completa) */}
-      <Route index element={<Home />} />
+      <Route index element={<Landing />} />   
       <Route path="home" element={<Home />} />
       <Route path="home.html" element={<Home />} />
 
