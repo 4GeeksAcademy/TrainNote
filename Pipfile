@@ -22,6 +22,7 @@ sqlalchemy = "*"
 psycopg2-binary = "*"
 google-genai = "*"
 tomli = "*"
+exceptiongroup = "*"
 
 [requires]
 python_version = "3.13"
