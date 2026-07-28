@@ -38,7 +38,7 @@ TrainNote también permite generar planes personalizados con inteligencia artifi
 - **React** — librería principal para la construcción de la interfaz.
 - **React Router DOM** — manejo de rutas y navegación.
 - **Tailwind CSS** — estilos y diseño responsivo.
-- **Recharts** — gráficos de evolución de peso y progreso.
+- **Chart.js** — gráficos de evolución de peso y progreso.
 - **Material Symbols (Google Fonts)** — iconografía de la interfaz.
 - **Cloudinary** — almacenamiento y entrega de imágenes de perfil (subida de avatar).
 - **Context API / useReducer (patrón Flux)** — manejo del estado global de la aplicación.
