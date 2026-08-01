@@ -72,15 +72,15 @@ cd TrainNote
 
 ```bash
 pipenv install
-npm install -D tailwindcss postcss autoprefixer 
-npm install chart.js react-chartjs-2
+pipenv install google-genai
 ```
 
 ### 3. Install frontend dependencies
 
 ```bash
 npm install
-npm install -D tailwindcss postcss autoprefixer npm install chart.js react-chartjs-2
+npm install -D tailwindcss postcss autoprefixer 
+npm install chart.js react-chartjs-2
 ```
 
 ### 4. Set up environment variables
