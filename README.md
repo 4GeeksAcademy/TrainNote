@@ -72,12 +72,15 @@ cd TrainNote
 
 ```bash
 pipenv install
+npm install -D tailwindcss postcss autoprefixer 
+npm install chart.js react-chartjs-2
 ```
 
 ### 3. Install frontend dependencies
 
 ```bash
 npm install
+npm install -D tailwindcss postcss autoprefixer npm install chart.js react-chartjs-2
 ```
 
 ### 4. Set up environment variables
@@ -113,3 +116,5 @@ Frontend:
 ```bash
 npm run start
 ```
+## Render URL
+https://sample-service-name-9edp.onrender.com/
