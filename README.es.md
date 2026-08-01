@@ -116,5 +116,3 @@ Frontend:
 ```bash
 npm run start
 ```
-## URL Render
-https://sample-service-name-9edp.onrender.com/
