@@ -342,7 +342,7 @@ def register():
   data = request.get_json() or {}
 
   nombre = data.get("nombre")
-  correo = data.get("email")
+  correo = data.get("email").lower().strip()
   password = data.get("password")
 
   if not nombre or not correo or not password:

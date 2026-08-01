@@ -5,6 +5,7 @@ export const PersonalDataForm = ({ user, onSubmit }) => {
   const [objetivo, setObjetivo] = useState("");
   const [altura, setAltura] = useState("");
   const [pesoDeseado, setPesoDeseado] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -17,6 +18,13 @@ export const PersonalDataForm = ({ user, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    if (!objetivo) {
+      setErrorMessage("Por favor selecciona un objetivo fitness antes de guardar.");
+      return;
+    }
+
     onSubmit({
       nombre,
       objetivo,
@@ -31,6 +39,14 @@ export const PersonalDataForm = ({ user, onSubmit }) => {
         <span className="material-symbols-outlined text-[#ff6b00] text-base">person_edit</span>
         <h3 className="text-xs font-mono font-bold uppercase text-white tracking-widest">Datos Personales</h3>
       </div>
+
+      {/* ALERTA DE ERROR VISUAL */}
+      {errorMessage && (
+        <div className="flex items-center gap-3 p-3 mb-3 rounded-xl border text-xs font-medium text-[#ffb4ab] bg-[#93000a]/20 border-[#ffb4ab]/20">
+          <span className="material-symbols-outlined text-[18px]">warning</span>
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
@@ -50,9 +66,9 @@ export const PersonalDataForm = ({ user, onSubmit }) => {
             value={objetivo}
             onChange={(e) => setObjetivo(e.target.value)}
             className="w-full bg-black/50 border border-white/15 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-all font-mono"
-            required
           >
-            <option value="" disabled className="bg-[#1a1a1a] text-[#e2bfb0]/60">Seleccione objetivo</option>
+            {/* Sin "disabled": así el navegador respeta el valor "" cuando no hay objetivo guardado */}
+            <option value="" className="bg-[#1a1a1a] text-[#e2bfb0]/60">Seleccione objetivo</option>
             <option value="Hipertrofia Muscular" className="bg-[#1a1a1a] text-white">Hipertrofia Muscular</option>
             <option value="Pérdida de Grasa" className="bg-[#1a1a1a] text-white">Pérdida de Grasa</option>
             <option value="Rendimiento Atlético" className="bg-[#1a1a1a] text-white">Rendimiento Atlético</option>
