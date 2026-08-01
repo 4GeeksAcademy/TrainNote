@@ -472,6 +472,20 @@
         display: block;
         white-space: nowrap;
       }
+      .hero h1 .headline-line.accent {
+        position: relative;
+        display: inline-block;
+      }
+      .accent-scribble {
+        position: absolute;
+        left: -2%;
+        bottom: -0.14em;
+        width: 104%;
+        height: 0.26em;
+        opacity: 0.85;
+        z-index: -1;
+        pointer-events: none;
+      }
       .hero h1 .outline {
         color: transparent;
         -webkit-text-stroke: 1.5px rgba(247, 245, 242, 0.5);
@@ -575,7 +589,8 @@
         box-shadow:
           0 30px 70px rgba(0, 0, 0, 0.54),
           inset 0 1px rgba(255, 255, 255, 0.025);
-        transform: none;
+        transform: rotate(-1.4deg);
+        transform-origin: 12% 8%;
         overflow: hidden;
         z-index: 1;
       }
@@ -978,6 +993,7 @@
       .metric-chip.one {
         top: 4px;
         right: -12px;
+        transform: rotate(2.5deg);
       }
       .metric-chip.two {
         left: 2px;
@@ -1084,6 +1100,41 @@
         color: #a99287;
         font-size: 14px;
         line-height: 1.55;
+      }
+      .meal-strip {
+        margin: 30px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .meal-chip {
+        flex: 1 1 150px;
+        padding: 15px 16px;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .meal-chip:nth-child(2) {
+        transform: rotate(0.6deg);
+      }
+      .meal-chip:nth-child(3) {
+        transform: rotate(-0.5deg);
+      }
+      .meal-chip-label {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: var(--orange-soft);
+        color: var(--orange);
+        font: 700 9px/1 var(--mono);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .meal-chip p {
+        margin: 10px 0 0;
+        color: #a99287;
+        font-size: 13px;
+        line-height: 1.5;
       }
       .product-panel {
         min-height: 560px;
@@ -2653,7 +2704,23 @@
             <h1 class="reveal delay-1">
               <span class="headline-line">Tu progreso</span>
               <span class="headline-line">no se adivina.</span>
-              <span class="headline-line accent">Se registra.</span>
+              <span class="headline-line accent">
+                Se registra.
+                <svg
+                  class="accent-scribble"
+                  viewBox="0 0 260 24"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 15.5C34 8 71 6 110 12.5C150 19 195 6 257 13"
+                    fill="none"
+                    stroke="var(--orange)"
+                    stroke-width="6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </span>
             </h1>
             <p class="hero-lead reveal delay-2">
               Apunta tus sesiones, comidas y evolución en un solo lugar. Revisa
@@ -2950,23 +3017,22 @@
               Organiza tus comidas, revisa objetivos diarios y conecta tu
               alimentación con el progreso que buscas, sin hojas de cálculo.
             </p>
-            <div class="feature-points">
-              <div class="feature-point">
-                <span>01</span>
-                <p>
-                  Visión clara de calorías, proteínas, carbohidratos y grasas.
-                </p>
+            <div class="meal-strip">
+              <div class="meal-chip">
+                <span class="meal-chip-label">Desayuno</span>
+                <p>Calorías, proteína y carbohidratos al despertar.</p>
               </div>
-              <div class="feature-point">
-                <span>02</span>
-                <p>
-                  Comidas organizadas por horario, historial y cumplimiento
-                  diario.
-                </p>
+              <div class="meal-chip">
+                <span class="meal-chip-label">Almuerzo</span>
+                <p>Registro rápido justo después de comer.</p>
               </div>
-              <div class="feature-point">
-                <span>03</span>
-                <p>Planes conectados con tus objetivos y tu evolución real.</p>
+              <div class="meal-chip">
+                <span class="meal-chip-label">Cena</span>
+                <p>Cierra el día y compara con tu objetivo diario.</p>
+              </div>
+              <div class="meal-chip">
+                <span class="meal-chip-label">Merienda</span>
+                <p>Tantas como quieras, sin romper el conteo.</p>
               </div>
             </div>
           </div>
