@@ -72,12 +72,15 @@ cd TrainNote
 
 ```bash
 pipenv install
+pipenv install google-genai
 ```
 
 ### 3. Instalar dependencias del frontend
 
 ```bash
 npm install
+npm install -D tailwindcss postcss autoprefixer
+npm install chart.js react-chartjs-2
 ```
 
 ### 4. Configurar variables de entorno
@@ -113,3 +116,5 @@ Frontend:
 ```bash
 npm run start
 ```
+## URL Render
+https://sample-service-name-9edp.onrender.com/
